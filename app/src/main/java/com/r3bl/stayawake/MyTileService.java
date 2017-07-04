@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static android.util.Log.d;
+
 public class MyTileService extends TileService {
 
 public static final String TAG = "SA_MyService";
@@ -21,48 +23,114 @@ private int mTimeRunning;
 
 @Override public void onCreate() {
   super.onCreate();
-  Log.d(TAG, "onCreate: ");
+  d(TAG, "onCreate: ");
 }
 
 @Override public void onDestroy() {
   super.onDestroy();
   if (mExecutor != null) {
     mExecutor.shutdownNow();
-    Log.d(TAG, "onDestroy: stopping executor");
+    d(TAG, "onDestroy: stopping executor");
   } else {
-    Log.d(TAG, "onDestroy: do nothing");
+    d(TAG, "onDestroy: do nothing");
   }
+  updateTile();
 }
 
 @Override public void onTileAdded() {
   super.onTileAdded();
-  Log.d(TAG, "onTileAdded: ");
+  d(TAG, "onTileAdded: ");
+  updateTile();
 }
 
 @Override public void onTileRemoved() {
   super.onTileRemoved();
-  Log.d(TAG, "onTileRemoved: ");
+  d(TAG, "onTileRemoved: ");
 }
 
 @Override public void onStartListening() {
   super.onStartListening();
+  d(TAG, "onStartListening: ");
   updateTile();
-  Log.d(TAG, "onStartListening: ");
 }
 
 @Override public void onStopListening() {
   super.onStopListening();
+  d(TAG, "onStopListening: ");
   updateTile();
-  Log.d(TAG, "onStopListening: ");
 }
 
 @Override public void onClick() {
   super.onClick();
-  Log.d(TAG, "onClick: ");
-  startService(new Intent(this, MyTileService.class));
+  d(TAG, "onClick: starting service with Command.START");
+  startService(new MyIntentBuilder(this).setCommand(Command.START).build());
+  updateTile();
 }
 
 @Override public int onStartCommand(Intent intent, int flags, int startId) {
+  Log.d(TAG, String.format("onStartCommand: startId: '%d'", startId));
+  routeIntentToCommand(intent);
+  return START_NOT_STICKY;
+}
+
+private void routeIntentToCommand(Intent intent) {
+  if (intent != null) {
+
+    // process command
+    if (MyIntentBuilder.containsCommand(intent)) {
+      processCommand(MyIntentBuilder.getCommand(intent));
+    }
+
+    // process message
+    if (MyIntentBuilder.containsMessage(intent)) {
+      processMessage(MyIntentBuilder.getMessage(intent));
+    }
+
+  }
+}
+
+private void processMessage(String message) {
+  try {
+    d(TAG,
+      String.format("doMessage: message from client: '%s'",
+                    message));
+
+  } catch (Exception e) {
+    Log.e(TAG, "processMessage: exception", e);
+  }
+}
+
+private void processCommand(int command) {
+  try {
+    switch (command) {
+      case Command.SELF_START:
+        commandSelfStart();
+        break;
+      case Command.START:
+        commandStart();
+        break;
+      case Command.STOP:
+        commandStop();
+        break;
+    }
+  } catch (Exception e) {
+    Log.e(TAG, "processCommand: exception", e);
+  }
+}
+
+private void commandSelfStart() {
+  // do nothing!
+}
+
+private void commandStop() {
+  // TODO: 7/4/17 called by the notification ... stopSelf and kill executor
+}
+
+private void commandStart() {
+
+  // self start the service just to move the service to a started state.
+  // self starting is just to set the status, it is a no-op otherwise.
+  startService(MyIntentBuilder.getInstance(this).setCommand(Command.SELF_START).build());
 
   if (mExecutor == null) {
     mTimeRunning = 0;
@@ -73,12 +141,11 @@ private int mTimeRunning;
       }
     };
     mExecutor.scheduleWithFixedDelay(runnable, 0, 1, TimeUnit.SECONDS);
-    Log.d(TAG, "onStartCommand: starting executor");
+    d(TAG, "onStartCommand: starting executor");
   } else {
-    Log.d(TAG, "onStartCommand: do nothing");
+    d(TAG, "onStartCommand: do nothing");
   }
 
-  return START_NOT_STICKY;
 }
 
 private void recurringTask() {
@@ -89,12 +156,12 @@ private void recurringTask() {
   if (mTimeRunning >= MAX_TIME_SEC) {
     if (!isCharging()) {
       stopSelf();
-      Log.d(TAG, "recurringTask: stopSelf");
+      d(TAG, "recurringTask: stopSelf");
     } else {
-      Log.d(TAG, "recurringTask: timer ended but phone is charging");
+      d(TAG, "recurringTask: timer ended but phone is charging");
     }
   } else {
-    Log.d(TAG, "recurringTask: normal");
+    d(TAG, "recurringTask: normal");
   }
 
 }
