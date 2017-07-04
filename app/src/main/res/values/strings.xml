@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Stay Awake</string>
+    <string name="tile_active_text">Won\'t sleep</string>
+    <string name="tile_inactive_text">Can sleep</string>
+</resources>
