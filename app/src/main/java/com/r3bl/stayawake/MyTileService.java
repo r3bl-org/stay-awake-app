@@ -1,22 +1,27 @@
 package com.r3bl.stayawake;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.os.BatteryManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.util.Log;
+import android.support.v4.app.NotificationCompat;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static android.util.Log.d;
+import static android.util.Log.e;
+import static com.r3bl.stayawake.Utils.getRandomNumber;
 
 public class MyTileService extends TileService {
 
-public static final String TAG = "SA_MyService";
+public static final  String TAG                     = "SA_MyService";
+private static final int    ONGOING_NOTIFICATION_ID = Utils.getRandomNumber();
 private ScheduledExecutorService mExecutor;
 private static final int MAX_TIME_SEC = 10;
 private int mTimeRunning;
@@ -68,7 +73,7 @@ private int mTimeRunning;
 }
 
 @Override public int onStartCommand(Intent intent, int flags, int startId) {
-  Log.d(TAG, String.format("onStartCommand: startId: '%d'", startId));
+  d(TAG, String.format("onStartCommand: startId: '%d'", startId));
   routeIntentToCommand(intent);
   return START_NOT_STICKY;
 }
@@ -96,7 +101,7 @@ private void processMessage(String message) {
                     message));
 
   } catch (Exception e) {
-    Log.e(TAG, "processMessage: exception", e);
+    e(TAG, "processMessage: exception", e);
   }
 }
 
@@ -114,16 +119,20 @@ private void processCommand(int command) {
         break;
     }
   } catch (Exception e) {
-    Log.e(TAG, "processCommand: exception", e);
+    e(TAG, "processCommand: exception", e);
   }
 }
 
+/**
+ * This is a no-op
+ */
 private void commandSelfStart() {
-  // do nothing!
 }
 
 private void commandStop() {
-  // TODO: 7/4/17 called by the notification ... stopSelf and kill executor
+  releaseWakeLock();
+  stopForeground(true);
+  stopSelf();
 }
 
 private void commandStart() {
@@ -134,6 +143,8 @@ private void commandStart() {
 
   if (mExecutor == null) {
     mTimeRunning = 0;
+    moveServiceToForeground();
+    acquireWakeLock();
     mExecutor = Executors.newSingleThreadScheduledExecutor();
     Runnable runnable = new Runnable() {
       @Override public void run() {
@@ -146,6 +157,55 @@ private void commandStart() {
     d(TAG, "onStartCommand: do nothing");
   }
 
+}
+
+private void moveServiceToForeground() {
+
+  // PendingIntent to launch the activity.
+  PendingIntent piLaunchMainActivity;
+  {
+    Intent iLaunchMainActivity = new Intent(this, MainActivity.class);
+    piLaunchMainActivity = PendingIntent.getActivity(
+      this, getRandomNumber(), iLaunchMainActivity, 0);
+  }
+
+  // PendingIntent to stop the service.
+  PendingIntent piStopService;
+  {
+    Intent iStopService = new MyIntentBuilder(this).setCommand(Command.STOP).build();
+    piStopService = PendingIntent.getService(
+      this, getRandomNumber(), iStopService, 0);
+  }
+
+  // Action to stop the service.
+  NotificationCompat.Action stopAction =
+    new NotificationCompat.Action.Builder(R.drawable.ic_stat_flare,
+                                          getString(R.string.stop_action_text),
+                                          piStopService
+    ).build();
+
+  Notification mNotification =
+    new NotificationCompat.Builder(this)
+      .setContentTitle(getString(R.string.notification_title_text))
+      .setContentText(getString(R.string.notification_content_text))
+      .setSmallIcon(R.drawable.ic_stat_whatshot)
+      .setContentIntent(piLaunchMainActivity)
+      .addAction(stopAction)
+      .setStyle(new NotificationCompat.BigTextStyle())
+      .build();
+
+  startForeground(ONGOING_NOTIFICATION_ID, mNotification);
+
+  d(TAG, "moveServiceToForeground: 1) notification created, 2) service in foreground, 3) MP started");
+
+}
+
+private void acquireWakeLock() {
+  d(TAG, "acquireWakeLock: ");
+}
+
+private void releaseWakeLock() {
+  d(TAG, "releaseWakeLock: ");
 }
 
 private void recurringTask() {
