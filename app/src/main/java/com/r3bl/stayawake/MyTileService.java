@@ -19,15 +19,29 @@ import java.util.concurrent.TimeUnit;
 
 import static android.util.Log.d;
 import static android.util.Log.e;
+import static com.r3bl.stayawake.MyIntentBuilder.containsCommand;
 
+/**
+ * This is a bound and started service. TileService is a bound service, and it automatically
+ * binds to the Settings Tile. Since this service also holds a WakeLock, this part of it
+ * happens in the started service, which also displays a persistent notification, and takes
+ * care of starting itself.
+ */
 public class MyTileService extends TileService {
+
+// Constants.
 
 public static final  String TAG          = "SA_MyService";
 private static final long   MAX_TIME_SEC = TimeUnit.SECONDS.convert(60, TimeUnit.HOURS);
 
+// Data.
+
 private long                     mTimeRunning;
 private PowerManager.WakeLock    wakeLock;
 private ScheduledExecutorService mExecutor;
+private boolean                  mServiceIsStarted;
+
+// General service code.
 
 @Override public void onCreate() {
   super.onCreate();
@@ -44,6 +58,8 @@ private ScheduledExecutorService mExecutor;
   }
   updateTile();
 }
+
+// Bound Service code & TileService code.
 
 @Override public void onTileAdded() {
   super.onTileAdded();
@@ -70,13 +86,20 @@ private ScheduledExecutorService mExecutor;
 
 @Override public void onClick() {
   super.onClick();
-  d(TAG, "onClick: starting service with Command.START");
-  startService(new MyIntentBuilder(this).setCommand(Command.START).build());
+  d(TAG, "onClick: calling commandStart()");
+  commandStart();
   updateTile();
 }
 
+// Started service code.
+
 @Override public int onStartCommand(Intent intent, int flags, int startId) {
-  d(TAG, String.format("onStartCommand: startId: '%d'", startId));
+  boolean containsCommand = MyIntentBuilder.containsCommand(intent);
+  d(TAG, String.format("onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
+                       mServiceIsStarted ? "STARTED" : "NOT STARTED",
+                       containsCommand ? MyIntentBuilder.getCommand(intent) : "N/A",
+                       startId));
+  mServiceIsStarted = true;
   routeIntentToCommand(intent);
   return START_NOT_STICKY;
 }
@@ -85,7 +108,7 @@ private void routeIntentToCommand(Intent intent) {
   if (intent != null) {
 
     // process command
-    if (MyIntentBuilder.containsCommand(intent)) {
+    if (containsCommand(intent)) {
       processCommand(MyIntentBuilder.getCommand(intent));
     }
 
@@ -111,9 +134,6 @@ private void processMessage(String message) {
 private void processCommand(int command) {
   try {
     switch (command) {
-      case Command.SELF_START:
-        // NO-OP - just used to put the service in the started state.
-        break;
       case Command.START:
         commandStart();
         break;
@@ -126,17 +146,36 @@ private void processCommand(int command) {
   }
 }
 
+/**
+ * This method can be called directly, or by firing an explicit Intent with
+ * {@link Command#STOP}.
+ */
 private void commandStop() {
   releaseWakeLock();
   stopForeground(true);
   stopSelf();
+  mServiceIsStarted = false;
   mExecutor.shutdown();
   mExecutor = null;
+  updateTile();
 }
 
+/**
+ * This can be called via an explicit intent to start this serivce, which
+ * calls {@link #onStartCommand(Intent, int, int)}
+ * or it can be called directly, which is what happens in {@link #onClick()}
+ * by this bound service.
+ * <p>
+ * This is why the service needs to {@link #moveTheServiceToAStartedState()}
+ * if it's not already in a started state. More details can be found in the
+ * method documentation itself.
+ */
 private void commandStart() {
 
-  selfStart();
+  if (!mServiceIsStarted) {
+    moveTheServiceToAStartedState();
+    return;
+  }
 
   if (mExecutor == null) {
     mTimeRunning = 0;
@@ -155,73 +194,35 @@ private void commandStart() {
       }
     };
     mExecutor.scheduleWithFixedDelay(runnable, 0, 1, TimeUnit.SECONDS);
-    d(TAG, "onStartCommand: starting executor");
+    d(TAG, "commandStart: starting executor");
   } else {
-    d(TAG, "onStartCommand: do nothing");
+    d(TAG, "commandStart: do nothing");
   }
 
 }
 
 /**
- * self start the service just to move the service to a started state.
- * self starting is just to set the status, it is a no-op otherwise.
+ * If a call is made to {@link #commandStart()} without firing an explicit Intent
+ * to put this service in a started state (which happens in {@link #onClick()}), then
+ * fire the explicit intent with {@link Command#START} which actually ends up calling
+ * {@link #commandStart()} again and this time, does the work of creating the executor.
+ * <p>
+ * Next, you would move this service into the foreground, which you can't do unless
+ * this service is in a started state.
  */
 @TargetApi(Build.VERSION_CODES.O)
-private void selfStart() {
+private void moveTheServiceToAStartedState() {
 
-  // Self start the service, since it won't be in a started state otherwise and
-  // startForeground(true) won't actually start the service!
-  Intent intent = new MyIntentBuilder(this).setCommand(Command.SELF_START).build();
+  Intent intent = new MyIntentBuilder(this).setCommand(Command.START).build();
   if (isPreAndroidO()) {
-    Log.d(TAG, "selfStart: Running on Android N or lower - using startService(intent)");
+    Log.d(TAG, "moveTheServiceToAStartedState: Running on Android N or lower - startService(intent)");
     startService(intent);
   } else {
-    Log.d(TAG, "selfStart: Running on Android O - using startForegroundService(intent)");
+    Log.d(TAG, "moveTheServiceToAStartedState: Running on Android O - startForegroundService(intent)");
     startForegroundService(intent);
   }
 
 }
-
-//private void moveServiceToForeground() {
-//
-//  // PendingIntent to launch the activity.
-//  PendingIntent piLaunchMainActivity;
-//  {
-//    Intent iLaunchMainActivity = new Intent(this, MainActivity.class);
-//    piLaunchMainActivity = PendingIntent.getActivity(
-//      this, getRandomNumber(), iLaunchMainActivity, 0);
-//  }
-//
-//  // PendingIntent to stop the service.
-//  PendingIntent piStopService;
-//  {
-//    Intent iStopService = new MyIntentBuilder(this).setCommand(Command.STOP).build();
-//    piStopService = PendingIntent.getService(
-//      this, getRandomNumber(), iStopService, 0);
-//  }
-//
-//  // Action to stop the service.
-//  NotificationCompat.Action stopAction =
-//    new NotificationCompat.Action.Builder(R.drawable.ic_stat_flare,
-//                                          getString(R.string.stop_action_text),
-//                                          piStopService
-//    ).build();
-//
-//  Notification mNotification =
-//    new NotificationCompat.Builder(this)
-//      .setContentTitle(getString(R.string.notification_title_text))
-//      .setContentText(getString(R.string.notification_content_text))
-//      .setSmallIcon(R.drawable.ic_stat_whatshot)
-//      .setContentIntent(piLaunchMainActivity)
-//      .addAction(stopAction)
-//      .setStyle(new NotificationCompat.BigTextStyle())
-//      .build();
-//
-//  startForeground(ONGOING_NOTIFICATION_ID, mNotification);
-//
-//  d(TAG, "moveServiceToForeground: 1) notification created, 2) service in foreground, 3) MP started");
-//
-//}
 
 private void acquireWakeLock() {
   if (wakeLock == null) {
@@ -254,7 +255,7 @@ private void recurringTask() {
     }
   } else {
     // Timer has not run out.
-    d(TAG, "recurringTask: normal");
+    //d(TAG, "recurringTask: normal");
   }
 
   updateTile();

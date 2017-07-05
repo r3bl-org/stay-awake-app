@@ -10,12 +10,11 @@ import java.lang.annotation.RetentionPolicy;
 
 // Command enumeration
 // more info - http://blog.shamanland.com/2016/02/int-string-enum.html
-@IntDef({Command.INVALID, Command.STOP, Command.START, Command.SELF_START})
+@IntDef({Command.INVALID, Command.STOP, Command.START})
 @Retention(RetentionPolicy.SOURCE) @interface Command {
-int INVALID    = -1;
-int STOP       = 0;
-int SELF_START = 1;
-int START      = 2;
+int INVALID = -1;
+int STOP    = 0;
+int START   = 1;
 }
 
 public class MyIntentBuilder {
