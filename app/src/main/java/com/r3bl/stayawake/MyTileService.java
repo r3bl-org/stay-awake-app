@@ -2,10 +2,12 @@ package com.r3bl.stayawake;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.os.BatteryManager;
+import android.os.PowerManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.support.v4.app.NotificationCompat;
@@ -23,8 +25,9 @@ public class MyTileService extends TileService {
 public static final  String TAG                     = "SA_MyService";
 private static final int    ONGOING_NOTIFICATION_ID = Utils.getRandomNumber();
 private ScheduledExecutorService mExecutor;
-private static final int MAX_TIME_SEC = 10;
-private int mTimeRunning;
+private static final int MAX_TIME_SEC = 20;
+private int                   mTimeRunning;
+private PowerManager.WakeLock wakeLock;
 
 @Override public void onCreate() {
   super.onCreate();
@@ -133,6 +136,8 @@ private void commandStop() {
   releaseWakeLock();
   stopForeground(true);
   stopSelf();
+  mExecutor.shutdown();
+  mExecutor = null;
 }
 
 private void commandStart() {
@@ -201,33 +206,45 @@ private void moveServiceToForeground() {
 }
 
 private void acquireWakeLock() {
-  d(TAG, "acquireWakeLock: ");
+  if (wakeLock == null) {
+    PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
+    wakeLock.acquire();
+    d(TAG, "acquireWakeLock: ");
+  }
 }
 
 private void releaseWakeLock() {
-  d(TAG, "releaseWakeLock: ");
+  if (wakeLock != null) {
+    wakeLock.release();
+    wakeLock = null;
+    d(TAG, "releaseWakeLock: ");
+  }
 }
 
 private void recurringTask() {
 
   mTimeRunning++;
-  updateTile();
 
   if (mTimeRunning >= MAX_TIME_SEC) {
-    if (!isCharging()) {
-      stopSelf();
-      d(TAG, "recurringTask: stopSelf");
-    } else {
+    // Timer has run out.
+    if (isCharging()) {
       d(TAG, "recurringTask: timer ended but phone is charging");
+    } else {
+      commandStop();
+      d(TAG, "recurringTask: commandStop()");
     }
   } else {
+    // Timer has not run out.
     d(TAG, "recurringTask: normal");
   }
+
+  updateTile();
 
 }
 
 private void updateTile() {
-  boolean isRunning = (mExecutor != null);
+  boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
   Tile tile = getQsTile();
   if (tile != null) {
     if (isRunning) {
