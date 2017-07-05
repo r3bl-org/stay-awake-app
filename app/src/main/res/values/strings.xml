@@ -2,8 +2,8 @@
     <string name="app_name">Stay Awake</string>
     <string name="tile_active_text">Won\'t sleep</string>
     <string name="tile_inactive_text">Can sleep</string>
-    <string name="stop_action_text">Stop Service</string>
-    <string name="notification_title_text">Stay Awake Running</string>
-    <string name="notification_content_text">Click to start MainActivity</string>
+    <string name="notification_stop_action_text">Stop Service</string>
+    <string name="notification_text_title">Stay Awake Running</string>
+    <string name="notification_text_content">Click to start MainActivity</string>
     <string name="message">Please add the quick tile settings icon for this app to your notification tray</string>
 </resources>

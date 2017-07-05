@@ -1,33 +1,33 @@
 package com.r3bl.stayawake;
 
-import android.app.Notification;
-import android.app.PendingIntent;
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.PowerManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static android.util.Log.d;
 import static android.util.Log.e;
-import static com.r3bl.stayawake.Utils.getRandomNumber;
 
 public class MyTileService extends TileService {
 
-public static final  String TAG                     = "SA_MyService";
-private static final int    ONGOING_NOTIFICATION_ID = Utils.getRandomNumber();
+public static final  String TAG          = "SA_MyService";
+private static final long   MAX_TIME_SEC = TimeUnit.SECONDS.convert(60, TimeUnit.HOURS);
+
+private long                     mTimeRunning;
+private PowerManager.WakeLock    wakeLock;
 private ScheduledExecutorService mExecutor;
-private static final int MAX_TIME_SEC = 20;
-private int                   mTimeRunning;
-private PowerManager.WakeLock wakeLock;
 
 @Override public void onCreate() {
   super.onCreate();
@@ -112,7 +112,7 @@ private void processCommand(int command) {
   try {
     switch (command) {
       case Command.SELF_START:
-        commandSelfStart();
+        // NO-OP - just used to put the service in the started state.
         break;
       case Command.START:
         commandStart();
@@ -126,12 +126,6 @@ private void processCommand(int command) {
   }
 }
 
-/**
- * This is a no-op
- */
-private void commandSelfStart() {
-}
-
 private void commandStop() {
   releaseWakeLock();
   stopForeground(true);
@@ -142,13 +136,17 @@ private void commandStop() {
 
 private void commandStart() {
 
-  // self start the service just to move the service to a started state.
-  // self starting is just to set the status, it is a no-op otherwise.
-  startService(MyIntentBuilder.getInstance(this).setCommand(Command.SELF_START).build());
+  selfStart();
 
   if (mExecutor == null) {
     mTimeRunning = 0;
-    moveServiceToForeground();
+
+    if (isPreAndroidO()) {
+      HandleNotifications.PreO.createNotification(this);
+    } else {
+      HandleNotifications.O.createNotification(this);
+    }
+
     acquireWakeLock();
     mExecutor = Executors.newSingleThreadScheduledExecutor();
     Runnable runnable = new Runnable() {
@@ -164,46 +162,66 @@ private void commandStart() {
 
 }
 
-private void moveServiceToForeground() {
+/**
+ * self start the service just to move the service to a started state.
+ * self starting is just to set the status, it is a no-op otherwise.
+ */
+@TargetApi(Build.VERSION_CODES.O)
+private void selfStart() {
 
-  // PendingIntent to launch the activity.
-  PendingIntent piLaunchMainActivity;
-  {
-    Intent iLaunchMainActivity = new Intent(this, MainActivity.class);
-    piLaunchMainActivity = PendingIntent.getActivity(
-      this, getRandomNumber(), iLaunchMainActivity, 0);
+  // Self start the service, since it won't be in a started state otherwise and
+  // startForeground(true) won't actually start the service!
+  Intent intent = new MyIntentBuilder(this).setCommand(Command.SELF_START).build();
+  if (isPreAndroidO()) {
+    Log.d(TAG, "selfStart: Running on Android N or lower - using startService(intent)");
+    startService(intent);
+  } else {
+    Log.d(TAG, "selfStart: Running on Android O - using startForegroundService(intent)");
+    startForegroundService(intent);
   }
-
-  // PendingIntent to stop the service.
-  PendingIntent piStopService;
-  {
-    Intent iStopService = new MyIntentBuilder(this).setCommand(Command.STOP).build();
-    piStopService = PendingIntent.getService(
-      this, getRandomNumber(), iStopService, 0);
-  }
-
-  // Action to stop the service.
-  NotificationCompat.Action stopAction =
-    new NotificationCompat.Action.Builder(R.drawable.ic_stat_flare,
-                                          getString(R.string.stop_action_text),
-                                          piStopService
-    ).build();
-
-  Notification mNotification =
-    new NotificationCompat.Builder(this)
-      .setContentTitle(getString(R.string.notification_title_text))
-      .setContentText(getString(R.string.notification_content_text))
-      .setSmallIcon(R.drawable.ic_stat_whatshot)
-      .setContentIntent(piLaunchMainActivity)
-      .addAction(stopAction)
-      .setStyle(new NotificationCompat.BigTextStyle())
-      .build();
-
-  startForeground(ONGOING_NOTIFICATION_ID, mNotification);
-
-  d(TAG, "moveServiceToForeground: 1) notification created, 2) service in foreground, 3) MP started");
 
 }
+
+//private void moveServiceToForeground() {
+//
+//  // PendingIntent to launch the activity.
+//  PendingIntent piLaunchMainActivity;
+//  {
+//    Intent iLaunchMainActivity = new Intent(this, MainActivity.class);
+//    piLaunchMainActivity = PendingIntent.getActivity(
+//      this, getRandomNumber(), iLaunchMainActivity, 0);
+//  }
+//
+//  // PendingIntent to stop the service.
+//  PendingIntent piStopService;
+//  {
+//    Intent iStopService = new MyIntentBuilder(this).setCommand(Command.STOP).build();
+//    piStopService = PendingIntent.getService(
+//      this, getRandomNumber(), iStopService, 0);
+//  }
+//
+//  // Action to stop the service.
+//  NotificationCompat.Action stopAction =
+//    new NotificationCompat.Action.Builder(R.drawable.ic_stat_flare,
+//                                          getString(R.string.stop_action_text),
+//                                          piStopService
+//    ).build();
+//
+//  Notification mNotification =
+//    new NotificationCompat.Builder(this)
+//      .setContentTitle(getString(R.string.notification_title_text))
+//      .setContentText(getString(R.string.notification_content_text))
+//      .setSmallIcon(R.drawable.ic_stat_whatshot)
+//      .setContentIntent(piLaunchMainActivity)
+//      .addAction(stopAction)
+//      .setStyle(new NotificationCompat.BigTextStyle())
+//      .build();
+//
+//  startForeground(ONGOING_NOTIFICATION_ID, mNotification);
+//
+//  d(TAG, "moveServiceToForeground: 1) notification created, 2) service in foreground, 3) MP started");
+//
+//}
 
 private void acquireWakeLock() {
   if (wakeLock == null) {
@@ -272,5 +290,14 @@ private boolean isCharging() {
                        status == BatteryManager.BATTERY_STATUS_FULL;
   return isCharging;
 }
+
+public static int getRandomNumber() {
+  return new Random().nextInt(100000);
+}
+
+public static boolean isPreAndroidO() {
+  return Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1;
+}
+
 
 }//end class MyTileService.
