@@ -5,5 +5,5 @@
     <string name="notification_stop_action_text">Stop Service</string>
     <string name="notification_text_title">Stay Awake Running</string>
     <string name="notification_text_content">Click to start MainActivity</string>
-    <string name="message">Please add the quick tile settings icon for this app to your notification tray</string>
+    <string name="message">Please add the quick tile settings icon for this app to your notification tray. The source code is available at https://github.com/r3bl-alliance/stay-awake-app</string>
 </resources>

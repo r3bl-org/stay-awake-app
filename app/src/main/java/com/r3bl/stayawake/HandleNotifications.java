@@ -16,7 +16,7 @@ public class HandleNotifications {
 //
 
 public static final int ONGOING_NOTIFICATION_ID = getRandomNumber();
-public static final int SMALL_ICON              = R.drawable.ic_stat_whatshot;
+public static final int SMALL_ICON              = R.drawable.ic_stat_visibility;
 public static final int STOP_ACTION_ICON        = R.drawable.ic_stat_flare;
 
 /**
