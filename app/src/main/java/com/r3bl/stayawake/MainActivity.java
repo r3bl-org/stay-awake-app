@@ -23,6 +23,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.util.Linkify;
 import android.widget.TextView;
 
+import java.util.concurrent.TimeUnit;
+
 public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "SA_MainActivity";
@@ -31,7 +33,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        formatMessage();
+    }
+
+    private void formatMessage() {
         TextView textView = (TextView) findViewById(R.id.textview);
+        final long hours = TimeUnit.SECONDS.toHours(MyTileService.MAX_TIME_SEC);
+        textView.setText(getString(R.string.message, hours));
         LinkifyCompat.addLinks(textView, Linkify.WEB_URLS);
     }
 }

@@ -17,10 +17,16 @@
 
 <resources>
     <string name="app_name">Stay Awake</string>
-    <string name="tile_active_text">Won\'t sleep</string>
+    <string name="tile_uninstalled_text">While charging</string>
+    <string name="tile_active_text">Awake for %1$s</string>
     <string name="tile_inactive_text">Can sleep</string>
-    <string name="notification_stop_action_text">Stop Service</string>
+    <string name="notification_stop_action_text">Stop</string>
     <string name="notification_text_title">Stay Awake Running</string>
-    <string name="notification_text_content">Click to start MainActivity</string>
-    <string name="message">Please add the quick tile settings icon for this app to your notification tray. The source code is available at https://github.com/r3bl-alliance/stay-awake-app</string>
+    <string name="notification_text_content">Click to open the app</string>
+    <string name="message">
+        Please add the quick tile settings icon for this app to your
+        notification tray. The app stays awake for %1$d hour without being plugged in.
+        It will stay awake indefinitely while charging. The source code is available
+        at https://github.com/r3bl-alliance/stay-awake-app
+    </string>
 </resources>

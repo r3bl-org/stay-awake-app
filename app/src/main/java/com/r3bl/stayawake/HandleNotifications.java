@@ -18,7 +18,11 @@
 package com.r3bl.stayawake;
 
 import android.annotation.TargetApi;
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
@@ -63,6 +67,7 @@ public class HandleNotifications {
 
     @TargetApi(25)
     public static class PreO {
+
         public static void createNotification(Service context) {
             // Create Pending Intents.
             PendingIntent piLaunchMainActivity = getLaunchActivityPI(context);
@@ -107,6 +112,7 @@ public class HandleNotifications {
 
     @TargetApi(26)
     public static class O {
+
         public static final String CHANNEL_ID = String.valueOf(getRandomNumber());
 
         public static void createNotification(Service context) {
@@ -158,4 +164,3 @@ public class HandleNotifications {
         return context.getString(R.string.notification_stop_action_text);
     }
 } // end class HandleNotifications.
-

@@ -49,11 +49,14 @@ public class MyTileService extends TileService {
     // Constants.
 
     public static final String TAG = "SA_MyService";
-    private static final long MAX_TIME_SEC = TimeUnit.SECONDS.convert(60, TimeUnit.HOURS);
+    public static final long MAX_TIME_SEC = TimeUnit.SECONDS.convert(1, TimeUnit.HOURS);
+    public static final int DELAY_INITIAL = 0;
+    public static final int DELAY_RECURRING = 1;
+    public static final TimeUnit DELAY_UNIT = TimeUnit.SECONDS;
 
     // Data.
 
-    private long mTimeRunning;
+    private long mTimeRunning_sec;
     private PowerManager.WakeLock wakeLock;
     private ScheduledExecutorService mExecutor;
     private boolean mServiceIsStarted;
@@ -110,8 +113,15 @@ public class MyTileService extends TileService {
     @Override
     public void onClick() {
         super.onClick();
-        d(TAG, "onClick: calling commandStart()");
-        commandStart();
+
+        if (mServiceIsStarted) {
+            d(TAG, "onClick: calling commandStop()");
+            commandStop();
+        } else {
+            d(TAG, "onClick: calling commandStart()");
+            commandStart();
+        }
+
         updateTile();
     }
 
@@ -201,7 +211,7 @@ public class MyTileService extends TileService {
         }
 
         if (mExecutor == null) {
-            mTimeRunning = 0;
+            mTimeRunning_sec = 0;
 
             if (isPreAndroidO()) {
                 HandleNotifications.PreO.createNotification(this);
@@ -218,7 +228,7 @@ public class MyTileService extends TileService {
                             recurringTask();
                         }
                     };
-            mExecutor.scheduleWithFixedDelay(runnable, 0, 1, TimeUnit.SECONDS);
+            mExecutor.scheduleWithFixedDelay(runnable, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT);
             d(TAG, "commandStart: starting executor");
         } else {
             d(TAG, "commandStart: do nothing");
@@ -266,9 +276,9 @@ public class MyTileService extends TileService {
 
     private void recurringTask() {
 
-        mTimeRunning++;
+        mTimeRunning_sec++;
 
-        if (mTimeRunning >= MAX_TIME_SEC) {
+        if (mTimeRunning_sec >= MAX_TIME_SEC) {
             // Timer has run out.
             if (isCharging()) {
                 d(TAG, "recurringTask: timer ended but phone is charging");
@@ -277,7 +287,7 @@ public class MyTileService extends TileService {
                 d(TAG, "recurringTask: commandStop()");
             }
         } else {
-            // Timer has not run out.
+            // Timer has not run out, do nothing.
             //d(TAG, "recurringTask: normal");
         }
 
@@ -285,23 +295,43 @@ public class MyTileService extends TileService {
     }
 
     private void updateTile() {
-        boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
+
         Tile tile = getQsTile();
+
+        boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
         if (tile != null) {
             if (isRunning) {
                 //tile.getIcon().setTint(Color.RED); // doesn't do anything
                 tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility));
                 tile.setState(Tile.STATE_ACTIVE);
-                tile.setLabel(
-                        String.format(
-                                "%s - %ds", getString(R.string.tile_active_text), mTimeRunning));
+                tile.setLabel(getString(R.string.tile_active_text, formatTime(mTimeRunning_sec)));
             } else {
                 //tile.getIcon().setTint(Color.WHITE); // doesn't do anything
                 tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility_off));
                 tile.setState(Tile.STATE_INACTIVE);
                 tile.setLabel(getString(R.string.tile_inactive_text));
             }
-            tile.updateTile();
+        }
+
+        tile.updateTile();
+    }
+
+    private String formatTime(long time_sec) {
+        if (time_sec <= 60) { // less than 1 min.
+
+            return String.format("%ds", time_sec);
+
+        } else if (time_sec > 60 && time_sec < 3600) { //less than 60 min.
+
+            final long minutes = TimeUnit.SECONDS.toMinutes(time_sec);
+            return String.format("%dm:%ds", minutes, time_sec - (minutes * 60));
+
+        } else { // more than 60 min.
+
+            final long hours = TimeUnit.SECONDS.toHours(time_sec);
+            final long minutes = TimeUnit.SECONDS.toMinutes(time_sec);
+            return String.format(
+                    "%dh:%dm:%ds", hours, minutes - (hours * 60), time_sec - (minutes * 60));
         }
     }
 

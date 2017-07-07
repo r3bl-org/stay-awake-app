@@ -20,6 +20,7 @@ package com.r3bl.stayawake;
 import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.IntDef;
+
 import junit.framework.Assert;
 
 import java.lang.annotation.Retention;
@@ -30,6 +31,7 @@ import java.lang.annotation.RetentionPolicy;
 @IntDef({Command.INVALID, Command.STOP, Command.START})
 @Retention(RetentionPolicy.SOURCE)
 @interface Command {
+
     int INVALID = -1;
     int STOP = 0;
     int START = 1;
