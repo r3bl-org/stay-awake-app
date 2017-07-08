@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 R3BL, LLC.
+ * Copyright 2017 R3BL LLC.
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor
  * license agreements. See the NOTICE file distributed with this work for additional
@@ -27,19 +27,19 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String TAG = "SA_MainActivity";
+public static final String TAG = "SA_MainActivity";
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        formatMessage();
-    }
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+  super.onCreate(savedInstanceState);
+  setContentView(R.layout.activity_main);
+  formatMessage();
+}
 
-    private void formatMessage() {
-        TextView textView = (TextView) findViewById(R.id.textview);
-        final long hours = TimeUnit.SECONDS.toHours(MyTileService.MAX_TIME_SEC);
-        textView.setText(getString(R.string.message, hours));
-        LinkifyCompat.addLinks(textView, Linkify.WEB_URLS);
-    }
+private void formatMessage() {
+  TextView textView = (TextView) findViewById(R.id.textview);
+  final long hours = TimeUnit.SECONDS.toHours(MyTileService.MAX_TIME_SEC);
+  textView.setText(getString(R.string.message, hours));
+  LinkifyCompat.addLinks(textView, Linkify.WEB_URLS);
+}
 }
