@@ -18,15 +18,20 @@
 <resources>
     <string name="app_name">Awake</string>
     <string name="tile_uninstalled_text">Stay awake</string>
-    <string name="tile_active_text">Awake for %1$s</string>
+    <string name="tile_active_text">Stop in %1$s</string>
+    <string name="tile_active_charging_text">Screen awake while charging</string>
     <string name="tile_inactive_text">Stay awake</string>
     <string name="notification_stop_action_text">Stop</string>
     <string name="notification_text_title">Awake is running</string>
     <string name="notification_text_content">Click to open the app</string>
     <string name="message">
-        Please add the quick tile settings icon for this app to your
-        notification tray. The app stays awake for %1$d hour without being plugged in.
-        It will stay awake indefinitely while charging. The source code is available
-        at https://github.com/r3bl-alliance/stay-awake-app
+        Awake runs as a quick tile setting.
+        \n\nPlease add Awake\'s Quick Settings Tile icon to
+        your notification tray.
+        \n\nThe app will keep your phone\'s screen awake for %1$d
+        minutes while it isn\'t charging.
+        \n\nIt will stay awake indefinitely while charging.
+        \n\nThe source
+        code is available at - https://github.com/r3bl-alliance/stay-awake-app
     </string>
 </resources>

@@ -24,6 +24,7 @@ import android.content.IntentFilter;
 import android.graphics.drawable.Icon;
 import android.os.BatteryManager;
 import android.os.Build;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
@@ -49,7 +50,7 @@ public class MyTileService extends TileService {
 // Constants.
 
 public static final String   TAG             = "SA_MyService";
-public static final long     MAX_TIME_SEC    = TimeUnit.SECONDS.convert(1, TimeUnit.HOURS);
+public static final long     MAX_TIME_SEC    = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES);
 public static final int      DELAY_INITIAL   = 0;
 public static final int      DELAY_RECURRING = 1;
 public static final TimeUnit DELAY_UNIT      = TimeUnit.SECONDS;
@@ -60,12 +61,18 @@ private long                     mTimeRunning_sec;
 private PowerManager.WakeLock    wakeLock;
 private ScheduledExecutorService mExecutor;
 private boolean                  mServiceIsStarted;
+private Icon                     mIconEyeOpen;
+private Icon                     mIconEyeClosed;
+private Handler                  mHandler;
 
 // General service code.
 
 @Override
 public void onCreate() {
   super.onCreate();
+  mHandler = new Handler();
+  mIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility);
+  mIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off);
   d(TAG, "onCreate: ");
 }
 
@@ -274,44 +281,69 @@ private void releaseWakeLock() {
   }
 }
 
+/**
+ * This method runs in a background thread, not the main thread, in the executor
+ */
 private void recurringTask() {
-
-  mTimeRunning_sec++;
-
-  if (mTimeRunning_sec >= MAX_TIME_SEC) {
-    // Timer has run out.
-    if (isCharging()) {
-      d(TAG, "recurringTask: timer ended but phone is charging");
-    } else {
-      commandStop();
-      d(TAG, "recurringTask: commandStop()");
-    }
+  if (isCharging()) {
+    // Reset the countdown timer.
+    mTimeRunning_sec = 0;
   } else {
-    // Timer has not run out, do nothing.
-    //d(TAG, "recurringTask: normal");
+    // Run down the countdown timer.
+    mTimeRunning_sec++;
+
+    if (mTimeRunning_sec >= MAX_TIME_SEC) {
+      // Timer has run out.
+      if (isCharging()) {
+        d(TAG, "recurringTask: timer ended but phone is charging");
+      } else {
+        commandStop();
+        d(TAG, "recurringTask: commandStop()");
+      }
+    } else {
+      // Timer has not run out, do nothing.
+      //d(TAG, "recurringTask: normal");
+    }
   }
 
-  updateTile();
+  mHandler.post(new Runnable() {
+    @Override public void run() {
+      updateTile();
+    }
+  });
 }
 
 private void updateTile() {
-
   Tile tile = getQsTile();
-
   boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
   if (tile != null) {
     if (isRunning) {
-      tile.setState(Tile.STATE_ACTIVE);
-      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility));
-      tile.setLabel(getString(R.string.tile_active_text, formatTime(mTimeRunning_sec)));
+      _isRunning(tile);
     } else {
-      tile.setState(Tile.STATE_INACTIVE);
-      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility_off));
-      tile.setLabel(getString(R.string.tile_inactive_text));
+      _isNotRunning(tile);
     }
   }
-
   tile.updateTile();
+}
+
+private void _isNotRunning(Tile tile) {
+  tile.setState(Tile.STATE_INACTIVE);
+  tile.setIcon(mIconEyeClosed);
+  tile.setLabel(getString(R.string.tile_inactive_text));
+}
+
+private void _isRunning(Tile tile) {
+  if (isCharging()) {
+    tile.setState(Tile.STATE_ACTIVE);
+    tile.setIcon(mIconEyeOpen);
+    tile.setLabel(getString(R.string.tile_active_charging_text));
+  } else {
+    tile.setState(Tile.STATE_ACTIVE);
+    tile.setIcon(mIconEyeOpen);
+    long timeRemaining = MAX_TIME_SEC - mTimeRunning_sec;
+    final String formatTime = formatTime(timeRemaining);
+    tile.setLabel(getString(R.string.tile_active_text, formatTime));
+  }
 }
 
 private String formatTime(long time_sec) {

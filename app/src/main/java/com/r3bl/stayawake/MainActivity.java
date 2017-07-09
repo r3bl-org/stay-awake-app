@@ -38,7 +38,7 @@ protected void onCreate(Bundle savedInstanceState) {
 
 private void formatMessage() {
   TextView textView = (TextView) findViewById(R.id.textview);
-  final long hours = TimeUnit.SECONDS.toHours(MyTileService.MAX_TIME_SEC);
+  final long hours = TimeUnit.SECONDS.toMinutes(MyTileService.MAX_TIME_SEC);
   textView.setText(getString(R.string.message, hours));
   LinkifyCompat.addLinks(textView, Linkify.WEB_URLS);
 }
