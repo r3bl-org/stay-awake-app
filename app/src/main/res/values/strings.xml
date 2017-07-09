@@ -24,6 +24,13 @@
     <string name="notification_stop_action_text">Stop</string>
     <string name="notification_text_title">Awake is running</string>
     <string name="notification_text_content">Click to open the app</string>
+    <string name="message2">
+        Awake runs as a Quick Tile Setting.
+        \n\nPlease add Awake’s Quick Settings Tile icon to your notification tray.
+        \n\nIf your phone is charging and you turn on Awake, it will stay awake indefinetly.
+        \n\nIf your phone is not charging, Awake will keep your phone’s screen awake for %1$d mins.
+        \n\nThe source code is available at - https://github.com/r3bl-alliance/stay-awake-app
+    </string>
     <string name="message">
         Awake runs as a quick tile setting.
         \n\nPlease add Awake\'s Quick Settings Tile icon to
