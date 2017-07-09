@@ -18,7 +18,7 @@
 <resources>
     <string name="app_name">Awake</string>
     <string name="tile_uninstalled_text">Stay awake</string>
-    <string name="tile_active_text">Stop in %1$s</string>
+    <string name="tile_active_text">Stops in %1$s</string>
     <string name="tile_active_charging_text">Screen awake while charging</string>
     <string name="tile_inactive_text">Stay awake</string>
     <string name="notification_stop_action_text">Stop</string>
