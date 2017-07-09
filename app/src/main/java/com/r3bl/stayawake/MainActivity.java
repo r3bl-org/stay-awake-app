@@ -27,19 +27,29 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-public static final String TAG = "SA_MainActivity";
+    public static final String TAG = "SA_MainActivity";
 
-@Override
-protected void onCreate(Bundle savedInstanceState) {
-  super.onCreate(savedInstanceState);
-  setContentView(R.layout.activity_main);
-  formatMessage();
-}
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        //showAppIconInActionBar();
+        setContentView(R.layout.activity_main);
+        formatMessage();
+    }
 
-private void formatMessage() {
-  TextView textView = (TextView) findViewById(R.id.textview);
-  final long hours = TimeUnit.SECONDS.toMinutes(MyTileService.MAX_TIME_SEC);
-  textView.setText(getString(R.string.message, hours));
-  LinkifyCompat.addLinks(textView, Linkify.WEB_URLS);
-}
+    private void showAppIconInActionBar() {
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setLogo(R.mipmap.ic_launcher);
+        getSupportActionBar().setDisplayUseLogoEnabled(true);
+    }
+
+    private void formatMessage() {
+        TextView textView1 = (TextView) findViewById(R.id.textview1);
+        TextView textview2 = (TextView) findViewById(R.id.textview2);
+
+        final long hours = TimeUnit.SECONDS.toMinutes(MyTileService.MAX_TIME_SEC);
+        textView1.setText(getString(R.string.about_message, hours));
+
+        LinkifyCompat.addLinks(textview2, Linkify.WEB_URLS);
+    }
 }

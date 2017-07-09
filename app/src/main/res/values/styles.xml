@@ -25,4 +25,28 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="TextContent" parent="@style/TextAppearance.AppCompat.Subhead">
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="TextTitle" parent="@style/TextAppearance.AppCompat.Headline">
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextLargest" parent="@style/TextAppearance.AppCompat.Display1">
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
 </resources>
