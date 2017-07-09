@@ -301,14 +301,12 @@ private void updateTile() {
   boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
   if (tile != null) {
     if (isRunning) {
-      //tile.getIcon().setTint(Color.RED); // doesn't do anything
-      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility));
       tile.setState(Tile.STATE_ACTIVE);
+      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility));
       tile.setLabel(getString(R.string.tile_active_text, formatTime(mTimeRunning_sec)));
     } else {
-      //tile.getIcon().setTint(Color.WHITE); // doesn't do anything
-      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility_off));
       tile.setState(Tile.STATE_INACTIVE);
+      tile.setIcon(Icon.createWithResource(this, R.drawable.ic_stat_visibility_off));
       tile.setLabel(getString(R.string.tile_inactive_text));
     }
   }

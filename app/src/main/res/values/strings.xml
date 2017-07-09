@@ -16,10 +16,10 @@
   -->
 
 <resources>
-    <string name="app_name">Stay Awake</string>
-    <string name="tile_uninstalled_text">While charging</string>
+    <string name="app_name">Awake</string>
+    <string name="tile_uninstalled_text">Stay awake</string>
     <string name="tile_active_text">Awake for %1$s</string>
-    <string name="tile_inactive_text">Can sleep</string>
+    <string name="tile_inactive_text">Stay awake</string>
     <string name="notification_stop_action_text">Stop</string>
     <string name="notification_text_title">Awake is running</string>
     <string name="notification_text_content">Click to open the app</string>
