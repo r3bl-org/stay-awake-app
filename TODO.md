@@ -1,3 +1,8 @@
+Next steps
+==========
+- Create MD for github and publish to devlife.
+- Write README.md and publish article on bound and started services.
+
 Project goals
 =============
 - Build an app for Android N and O that allows designers and developers to keep their 
@@ -14,13 +19,6 @@ Open links
 Docs
 ====
 - N/A
-
-Next steps
-==========
-- Create MD for github and publish to devlife.
-- Write README.md and publish article on bound and started services.
-- Clean up the UI design.
-- Publish to play store.
 
 Related projects
 ================
