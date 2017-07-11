@@ -1,2 +1,3 @@
 #!/bin/bash
-convert-md playstorelisting.md
+gh-md-toc android-services-article.md
+convert-md android-services-article.md

@@ -1,14 +1,37 @@
 Android O, N and below component lifecycles and background tasks
 ================================================================
 
+Table of Contents
+=================
+
+   * [Introduction](#introduction)
+   * [Threads, Services, and Android component lifecycles](#threads-services-and-android-component-lifecycles)
+   * [Android O Changes](#android-o-changes)
+   * [Started Services](#started-services)
+      * [Intent](#intent)
+      * [Foreground and persistent notification](#foreground-and-persistent-notification)
+      * [Stopping Started Services](#stopping-started-services)
+   * [Bound Services](#bound-services)
+      * [bindService() and onCreate()](#bindservice-and-oncreate)
+      * [Service binder](#service-binder)
+      * [unBind and onDestroy](#unbind-and-ondestroy)
+   * [Bound and Started Services](#bound-and-started-services)
+      * [Moving to Started State](#moving-to-started-state)
+      * [Destruction and unbinding](#destruction-and-unbinding)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
+
+# Introduction
+
 Most sophisticated Android apps have to do something that requires background execution. 
-This means in a background thread, and not the main thread, which is used for all UI updates.
+This means in a background thread, and not the main thread (which is used for all UI updates).
 
 If you create a Thread or an Executor in an Activity of your app, this leads to unpredictable
 results, since a simple screen orientation change will disrupt things, since the Activity 
 will no longer be around when the Thread completes it's task. 
 
-You could use AsyncTask to handle this, but what if your app needs this background thread to be 
+You could use [AsyncTask](https://developer.android.com/reference/android/os/AsyncTask.html) 
+to handle this, but what if your app needs this background thread to be 
 started from not just an Activity, but a notification or another component? 
 
 In these cases, Android Services are the right Android component to use to match up the
@@ -24,7 +47,7 @@ in a background thread, then you must manage that yourself. The terms `backgroun
 
 In this article, we are going to use the terms background and foreground to refer to 
 the lifecycle of Android components. And when referring to Threads, we will use 
-background thread, and foreground thread explicitly. 
+`background thread`, and `foreground thread` explicitly. 
 
 There is a subclass of Service that handles it's own background thread called IntentService
 which we are not going to cover in this article. 
@@ -39,15 +62,19 @@ starting and ending points don't necessarily connect with a Thread's lifecycle.
 
 ![](lifecycles.png)
 
-The following are some key points to note in this diagram.
+The following are high level points to note in this diagram. The details for all of these
+points (and clarifications to them) are going to be provided in the rest of the article.
 
-- The Service's onCreate() method is called when it's created. It then spawns a Thread
-  or an Executor. When this Thread finishes, it lets the Service know that by calling
-  stopSelf(). This is a very common pattern in Service implementations.
+- The Service's onCreate() method is called when it is created (by starting it 
+  or binding to it). 
+    - It then spawns a Thread or an Executor some time after it has been created. 
+    - When this Thread finishes, it lets the Service know that by calling
+      stopSelf(). This is a very common pattern in Service implementations.
 - The code that you write in your Thread or Executor task will have to tell the service
-  whether the background thread has started or stopped. So when the Thread starts up
-  it has to set the started state of the service (by calling startService()). 
-  And when the Thread stops it has to call stopSelf().
+  whether the background thread has started or stopped. 
+    - When the Thread starts up it has to set the started state of the service (by calling 
+      startService()).
+    - And when the Thread stops it has to call stopSelf().
 - The Service's onDestroy() method is called by the Android system only when you've let
   the service kow that it's time stop. The Service doesn't know what is going on in
   the code running in your Thread or Executor task - it is your responsibility to let
@@ -56,9 +83,9 @@ The following are some key points to note in this diagram.
 There are 2 kinds of services - Started Services, and Bound Services. And a Service can be
 both at the same time. We will now cover the behaviors of 3 types of services:
 
-1) Started Services
-2) Bound Services
-3) Bound and Started Services
+1. Started Services
+2. Bound Services
+3. Bound and Started Services
 
 # Android O Changes
 
@@ -69,7 +96,7 @@ when the Activity goes away. In other words, you must have a persistent notifica
 that you attach the Started Service to. And you also start Started Services with
 a different method - startForegroundService(). And you have 5 seconds in order to
 move this Started Service to the foreground and attach a persistent notification to it,
-otherwise you will get an ANR. 
+otherwise you will get an ANR. All of this will be explained below with examples.
 
 # Started Services
 
@@ -133,11 +160,11 @@ Keep this in mind when allocating resources for your Started Service.
 ## Intent
 
 A Started Service is launched with an Intent. And the component that launches the Service doesn't
-really keep a connection with it, and if it needs to communicate something to the Started Service
+really keep a connection to it, and if it needs to communicate something to the Started Service
 then it can start it again and pass it a different Intent. This is one of the main differences
 between Started and Bound Services. Bound Services on the other hand follow a client-server 
-pattern. Where the client (Android UI component or another Service) retains a stub that it
-can use to call methods directly on the Service (in this case the server).
+pattern. Where the client (Android UI component or another Service) retains a stub (or binder) 
+that it can use to call methods directly on the Service (in this case the server).
 
 ```java
 public class MyActivity extends Activity{
@@ -171,8 +198,8 @@ is critical to do this in order to deliver a compelling user experience.
 
 Sample use cases are:
 
-1) Apps that need to record or play media (audio/video) in the background.
-2) Apps that need to capture fine grained location in the background.
+1. Apps that need to record or play media (audio/video) in the background.
+2. Apps that need to capture fine grained location in the background.
 
 When a Started Service moves into the foreground, it must display a persistent notification,
 explicitly notifying the user that the service is running. This is important because a
@@ -353,11 +380,11 @@ stopForeground(true). This will also take away the persistent notification. Howe
 will not stop the service. In order to do that you still have to call stopSelf().
 
 To stop a service, you can do any of the following:
-1) As shown above, pass an Intent with an extra to startService() that will be processed
+1. As shown above, pass an Intent with an extra to startService() that will be processed
    by onStartCommand(), which will actually call stopSelf() on the service. If there
    are no clients bound to it, then it will result in onDestroy() being called, and the
    service shutting down.
-2) You can also create an explicit Intent (pointing to the Service class) and pass it to
+2. You can also create an explicit Intent (pointing to the Service class) and pass it to
    stopService(), which will cause stopSelf() to be called, and then onDestroy() in case
    there are no bound clients. 
 
@@ -372,7 +399,7 @@ public class MyActivity extends Activity{
         startService(new MyIntentBuilder(this).setCommand(Command.STOP).build());
     }
 }
-````
+```
 
 And here's the code in your Started Service that would respond to these (assuming that
 your Started Service has been moved to the foreground).
@@ -480,7 +507,7 @@ public class MyService extends Service{
 }
 ```
 
-The Bound Service creates a mBinder object of type IBinder. So what is this IBinder?
+The Bound Service creates a `mBinder` object of type IBinder. So what is this IBinder?
 
 Binder is an Android base class that allows a remotable object to be created. It implements
 a lightweight RPC mechanism for high performance in-process and cross-process calls
@@ -641,8 +668,8 @@ public class MyService extends Service{
 ```
 
 In the example above:
-1) `commandStart()` can be called by a client that binds to the Service.
-2) Or it can be called via an Intent that is passed to startService() or 
+1. `commandStart()` can be called by a client that binds to the Service.
+2. Or it can be called via an Intent that is passed to startService() or 
    startServiceInForeground() (for Android O). 
 
 Regardless, what the example shows is the Service putting itself in the
@@ -653,11 +680,11 @@ The Service hasn't been started yet.
 
 Let's walk thru this code. 
 
-1) If the Service is Bound to a client, then it is not started (and mServiceStarted is false).   
-2) In this case the call to moveToStarted() state simply creates an explicit Intent with
+1. If the Service is Bound to a client, then it is not started (and mServiceStarted is false).   
+2. In this case the call to moveToStarted() state simply creates an explicit Intent with
    an Extra (Command.START), and calls startService() or startForegroundService(). 
-3) This ends up calling onStartCommand() which routes to `commandStart()` again!
-4) However, this time in `commandStart()` `mServiceIsStarted` is set to `true` and this
+3. This ends up calling onStartCommand() which routes to `commandStart()` again!
+4. However, this time in `commandStart()` `mServiceIsStarted` is set to `true` and this
    will actually do the work of `commandStart()` which is to create the Executor.
 
 ## Destruction and unbinding
@@ -668,3 +695,13 @@ then it will be killed and onDestroy() will be called.
 However, if it is in the Started State, then it will not be killed. It will only be
 killed if the Started Service is stoppd (either by calling StopService(Intent) or
 by calling startService(Intent with Extras and Command.STOP)).
+
+# Source code examples
+
+You can see examples of most of the things outlined in this article in the source code
+for the Awake app. Here are some links:
+
+- [Awake Android App on Google Play Store](https://play.google.com/store/apps/details?id=com.r3bl.stayawake&rdid=com.r3bl.stayawake)
+- [Source code for Awake app on GitHub](https://github.com/r3bl-alliance/stay-awake-app)
+
+<a href='https://play.google.com/store/apps/details?id=com.r3bl.stayawake&rdid=com.r3bl.stayawake&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/badge_new.png'/></a>

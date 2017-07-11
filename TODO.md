@@ -1,7 +1,6 @@
 Next steps
 ==========
 - Create MD for github and publish to devlife.
-- Write README.md and publish article on bound and started services.
 
 Project goals
 =============
