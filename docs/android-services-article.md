@@ -60,7 +60,7 @@ bound to any the lifecycle of any Android components. If you think about an Acti
 has a discrete starting and ending point, based on user interaction. However, these
 starting and ending points don't necessarily connect with a Thread's lifecycle. 
 
-![](lifecycles.png)
+![](https://i2.wp.com/developerlifecom.files.wordpress.com/2017/07/lifecycles.png)
 
 The following are high level points to note in this diagram. The details for all of these
 points (and clarifications to them) are going to be provided in the rest of the article.
@@ -699,7 +699,8 @@ by calling startService(Intent with Extras and Command.STOP)).
 # Source code examples
 
 You can see examples of most of the things outlined in this article in the source code
-for the Awake app. Here are some links:
+for the Awake app. It is a simple utility for Android O and N that keeps your screen 
+on while charging. Here are some links:
 
 - [Awake Android App on Google Play Store](https://play.google.com/store/apps/details?id=com.r3bl.stayawake&rdid=com.r3bl.stayawake)
 - [Source code for Awake app on GitHub](https://github.com/r3bl-alliance/stay-awake-app)
