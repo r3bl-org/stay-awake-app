@@ -1,6 +1,6 @@
 Next steps
 ==========
-- Create MD for github and publish to devlife.
+- N/A
 
 Project goals
 =============
