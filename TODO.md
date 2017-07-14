@@ -1,6 +1,6 @@
 Next steps
 ==========
-- N/A
+- Integrate Maret's new designs into the MainActivity (create new styles)
 
 Project goals
 =============

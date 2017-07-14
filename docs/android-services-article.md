@@ -44,7 +44,7 @@ There is a subclass of Service that handles it's own Background Thread called [I
 
 Let's take a step back and look at a larger picture of what Services are meant to do. Your code that runs in a Background Thread, like a Java Thread or an Executor isn't really bound to any the lifecycle of any Android components. If you think about an Activity, it has a discrete starting and ending point, based on user interaction. However, these starting and ending points don't necessarily connect with a Thread's lifecycle. 
 
-![](https://i2.wp.com/developerlifecom.files.wordpress.com/2017/07/lifecycles.png)
+![](https://developerlifecom.files.wordpress.com/2017/07/lifecycles1.png)
 
 The following are high level points to note in this diagram. The details for all of these points (and clarifications to them) are going to be provided in the rest of the article.
 
@@ -557,6 +557,10 @@ Let's walk thru this code.
 When a client component unbinds from your Service, if it is NOT in the Started State then it will be killed and `onDestroy()` will be called.
 
 However, if it is in the Started State, then it will not be killed. It will only be killed if the Started Service is stopped (either by calling `stopService(Intent)` or by calling `startService(Intent)` with Extras to let the service know it should stop, for eg: `Command.STOP`)).
+
+Here’s a diagram that summarizes these states and transitions between them for a bound and started service.
+
+![](https://developerlifecom.files.wordpress.com/2017/07/bound-started-service-lifecycle.png)
 
 # Source code example
 
