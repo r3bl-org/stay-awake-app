@@ -42,6 +42,7 @@
         <item name="android:textColor">@color/colorTextDark</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textSize">22sp</item>
+        <item name="android:fontFamily">@font/notosans_bold</item>
     </style>
 
     <style name="AppTitleImage">
