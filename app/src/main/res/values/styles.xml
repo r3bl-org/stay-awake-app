@@ -27,20 +27,26 @@
     </style>
 
     <!--
+    Global styles
+    -->
+    <style name="AppContainerPadding">
+        <item name="android:padding">20dp</item>
+    </style>
+
+    <!--
     The following styles are for the AppTitle
     which is an icon and a text
      -->
     <style name="AppTitle">
-        <item name="android:paddingTop">16dp</item>
-        <item name="android:paddingBottom">16dp</item>
+        <item name="android:paddingTop">25dp</item>
+        <item name="android:paddingBottom">25dp</item>
     </style>
 
     <style name="AppTitleText">
-        <item name="android:paddingLeft">12dp</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_marginLeft">9dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:textColor">@color/colorTextDark</item>
-        <item name="android:textStyle">bold</item>
         <item name="android:textSize">22sp</item>
     </style>
 
@@ -50,32 +56,60 @@
         <item name="android:scaleType">centerCrop</item>
     </style>
 
+    <style name="AppTitleMarketingText">
+        <item name="android:lineSpacingMultiplier">0.9</item>
+        <item name="android:paddingBottom">40dp</item>
+        <item name="android:paddingTop">40dp</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">@color/colorTextLight</item>
+        <item name="android:textSize">37sp</item>
+    </style>
+
     <!--
-    Deprecated styles below
+    Body styles
     -->
 
-    <style name="TextContent" parent="@style/TextAppearance.AppCompat.Subhead">
-        <item name="android:paddingBottom">8dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:layout_height">match_parent</item>
+    <style name="LineSeparator">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:background">@color/separatorColor</item>
     </style>
 
-    <style name="TextTitle" parent="@style/TextAppearance.AppCompat.Headline">
-        <item name="android:paddingBottom">8dp</item>
-        <item name="android:paddingTop">8dp</item>
-        <item name="android:layout_height">match_parent</item>
+    <style name="VerticalWhitespaceSeparator">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textStyle">bold</item>
+        <item name="android:layout_height">23dp</item>
     </style>
 
-    <style name="TextLargest" parent="@style/TextAppearance.AppCompat.Display1">
-        <item name="android:paddingLeft">12dp</item>
-        <item name="android:layout_height">match_parent</item>
+    <style name="Heading1">
+        <item name="android:paddingBottom">17dp</item>
+        <item name="android:paddingTop">17dp</item>
+        <item name="android:textAlignment">textStart</item>
+        <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/colorTextDark</item>
+        <item name="android:textSize">26sp</item>
+    </style>
+
+    <style name="Body1">
+        <item name="android:lineSpacingMultiplier">1.15</item>
+        <item name="android:paddingBottom">16dp</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:textAlignment">textStart</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:textColor">@color/colorTextLight</item>
+        <item name="android:textSize">17sp</item>
+    </style>
+
+    <style name="Image1">
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:layout_marginLeft">20dp</item>
+        <item name="android:layout_marginRight">20dp</item>
     </style>
 
 </resources>

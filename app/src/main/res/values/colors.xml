@@ -21,4 +21,5 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorTextDark">#373737</color>
     <color name="colorTextLight">#8D8D8D</color>
+    <color name="separatorColor">#1A000000</color>
 </resources>
