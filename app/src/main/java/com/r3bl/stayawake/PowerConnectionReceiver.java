@@ -21,9 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-/**
- * Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg
- */
+/** Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg */
 public class PowerConnectionReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(MyTileService.TAG, "");
