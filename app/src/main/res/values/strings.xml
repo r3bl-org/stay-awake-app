@@ -16,55 +16,55 @@
   -->
 
 <resources>
-    <string name="app_name">Awake</string>
-    <string name="tile_uninstalled_text">Stay awake</string>
-    <string name="tile_active_text">Stops in %1$s</string>
-    <string name="tile_active_charging_text">Screen awake while charging</string>
-    <string name="tile_inactive_text">Stay awake</string>
-    <string name="notification_stop_action_text">Stop</string>
-    <string name="notification_text_title">Awake is running</string>
-    <string name="notification_text_content">Click to open the app</string>
+  <string name="app_name">Awake</string>
+  <string name="tile_uninstalled_text">Stay awake</string>
+  <string name="tile_active_text">Stops in %1$s</string>
+  <string name="tile_active_charging_text">Screen awake while charging</string>
+  <string name="tile_inactive_text">Stay awake</string>
+  <string name="notification_stop_action_text">Stop</string>
+  <string name="notification_text_title">Awake is running</string>
+  <string name="notification_text_content">Click to open the app</string>
 
-    <string name="marketing_message">
+  <string name="marketing_message">
         Keep your screen\non while charging
     </string>
 
-    <string name="introduction_title">
+  <string name="introduction_title">
         Introduction
     </string>
 
-    <string name="introduction_body">
+  <string name="introduction_body">
         Thank you for installing Awake app! Awake will keep your screen on indefinitely
         while charging or %1$d min if not charging.
     </string>
 
-    <string name="install_title">
+  <string name="install_title">
         Finish installation
     </string>
 
-    <string name="install_body">
+  <string name="install_body">
         Awake runs as a Quick Tile Setting and to
         finish off installation, add Awake’s Quick
         Settings Tile icon to your notification tray.
     </string>
 
-    <string name="install_body_1">
+  <string name="install_body_1">
         %1$s - Slide down your Quick Settings Tile and click on edit.
     </string>
 
-    <string name="install_body_2">
+  <string name="install_body_2">
         %1$s - Hold and drag Awake icon to the top.
     </string>
 
-    <string name="install_body_3">
+  <string name="install_body_3">
         %1$s - Turn on Awake, by clicking on Stay Awake. Remember to put your phone on charge.
     </string>
 
-    <string name="github_title">
+  <string name="github_title">
         Open Source
     </string>
 
-    <string name="github_body">
+  <string name="github_body">
         The source code is available at -
         https://github.com/r3bl-alliance/stay-awake-app
     </string>

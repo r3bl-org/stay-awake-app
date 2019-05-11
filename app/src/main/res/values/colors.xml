@@ -16,10 +16,10 @@
   -->
 
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
-    <color name="colorTextDark">#373737</color>
-    <color name="colorTextLight">#8D8D8D</color>
-    <color name="separatorColor">#1A000000</color>
+  <color name="colorPrimary">#3F51B5</color>
+  <color name="colorPrimaryDark">#303F9F</color>
+  <color name="colorAccent">#FF4081</color>
+  <color name="colorTextDark">#373737</color>
+  <color name="colorTextLight">#8D8D8D</color>
+  <color name="separatorColor">#1A000000</color>
 </resources>

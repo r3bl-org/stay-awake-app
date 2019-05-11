@@ -17,99 +17,99 @@
 
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowTranslucentStatus">true</item>
-    </style>
+  <!-- Base application theme. -->
+  <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <!-- Customize your theme here. -->
+    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="colorAccent">@color/colorAccent</item>
+    <item name="android:windowTranslucentStatus">true</item>
+  </style>
 
-    <!--
-    Global styles
-    -->
-    <style name="AppContainerPadding">
-        <item name="android:padding">20dp</item>
-    </style>
+  <!--
+  Global styles
+  -->
+  <style name="AppContainerPadding">
+    <item name="android:padding">20dp</item>
+  </style>
 
-    <!--
-    The following styles are for the AppTitle
-    which is an icon and a text
-     -->
-    <style name="AppTitle">
-        <item name="android:paddingTop">25dp</item>
-        <item name="android:paddingBottom">25dp</item>
-    </style>
+  <!--
+  The following styles are for the AppTitle
+  which is an icon and a text
+   -->
+  <style name="AppTitle">
+    <item name="android:paddingTop">25dp</item>
+    <item name="android:paddingBottom">25dp</item>
+  </style>
 
-    <style name="AppTitleText">
-        <item name="android:layout_marginLeft">9dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:textColor">@color/colorTextDark</item>
-        <item name="android:textSize">22sp</item>
-    </style>
+  <style name="AppTitleText">
+    <item name="android:layout_marginLeft">9dp</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:textColor">@color/colorTextDark</item>
+    <item name="android:textSize">22sp</item>
+  </style>
 
-    <style name="AppTitleImage">
-        <item name="android:layout_width">40dp</item>
-        <item name="android:layout_height">40dp</item>
-        <item name="android:scaleType">centerCrop</item>
-    </style>
+  <style name="AppTitleImage">
+    <item name="android:layout_width">40dp</item>
+    <item name="android:layout_height">40dp</item>
+    <item name="android:scaleType">centerCrop</item>
+  </style>
 
-    <style name="AppTitleMarketingText">
-        <item name="android:lineSpacingMultiplier">0.9</item>
-        <item name="android:paddingBottom">40dp</item>
-        <item name="android:paddingTop">40dp</item>
-        <item name="android:textAlignment">center</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@color/colorTextLight</item>
-        <item name="android:textSize">37sp</item>
-    </style>
+  <style name="AppTitleMarketingText">
+    <item name="android:lineSpacingMultiplier">0.9</item>
+    <item name="android:paddingBottom">40dp</item>
+    <item name="android:paddingTop">40dp</item>
+    <item name="android:textAlignment">center</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:textColor">@color/colorTextLight</item>
+    <item name="android:textSize">37sp</item>
+  </style>
 
-    <!--
-    Body styles
-    -->
+  <!--
+  Body styles
+  -->
 
-    <style name="LineSeparator">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">1dp</item>
-        <item name="android:background">@color/separatorColor</item>
-    </style>
+  <style name="LineSeparator">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">1dp</item>
+    <item name="android:background">@color/separatorColor</item>
+  </style>
 
-    <style name="VerticalWhitespaceSeparator">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">23dp</item>
-    </style>
+  <style name="VerticalWhitespaceSeparator">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">23dp</item>
+  </style>
 
-    <style name="Heading1">
-        <item name="android:paddingBottom">17dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:textAlignment">textStart</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@color/colorTextDark</item>
-        <item name="android:textSize">26sp</item>
-    </style>
+  <style name="Heading1">
+    <item name="android:paddingBottom">17dp</item>
+    <item name="android:paddingTop">17dp</item>
+    <item name="android:textAlignment">textStart</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:textColor">@color/colorTextDark</item>
+    <item name="android:textSize">26sp</item>
+  </style>
 
-    <style name="Body1">
-        <item name="android:lineSpacingMultiplier">1.15</item>
-        <item name="android:paddingBottom">16dp</item>
-        <item name="android:paddingTop">16dp</item>
-        <item name="android:textAlignment">textStart</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:textColor">@color/colorTextLight</item>
-        <item name="android:textSize">17sp</item>
-    </style>
+  <style name="Body1">
+    <item name="android:lineSpacingMultiplier">1.15</item>
+    <item name="android:paddingBottom">16dp</item>
+    <item name="android:paddingTop">16dp</item>
+    <item name="android:textAlignment">textStart</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:textColor">@color/colorTextLight</item>
+    <item name="android:textSize">17sp</item>
+  </style>
 
-    <style name="Image1">
-        <item name="android:adjustViewBounds">true</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:scaleType">fitCenter</item>
-        <item name="android:layout_marginLeft">20dp</item>
-        <item name="android:layout_marginRight">20dp</item>
-    </style>
+  <style name="Image1">
+    <item name="android:adjustViewBounds">true</item>
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:scaleType">fitCenter</item>
+    <item name="android:layout_marginLeft">20dp</item>
+    <item name="android:layout_marginRight">20dp</item>
+  </style>
 
 </resources>

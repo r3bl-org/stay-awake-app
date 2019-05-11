@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ Copyright 2017 R3BL LLC.
   ~
   ~ Licensed to the Apache Software Foundation (ASF) under one or more contributor
@@ -17,112 +16,113 @@
   -->
 
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      style="@style/AppContainerPadding">
 
     <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            style="@style/AppContainerPadding"
-    >
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        style="@style/AppTitle">
 
-        <LinearLayout android:layout_width="match_parent"
-                      android:layout_height="wrap_content" android:orientation="horizontal"
-                      style="@style/AppTitle">
-            <ImageView
-                    style="@style/AppTitleImage"
-                    app:srcCompat="@drawable/awake_logo"/>
+      <ImageView
+          style="@style/AppTitleImage"
+          app:srcCompat="@drawable/awake_logo" />
 
-            <TextView
-                    android:id="@+id/text_app_title"
-                    android:text="@string/app_name"
-                    style="@style/AppTitleText"
-                    android:gravity="center_vertical" android:layout_gravity="center_vertical"/>
-
-        </LinearLayout>
-
-        <TextView
-                android:id="@+id/text_marketing_message"
-                android:text="@string/marketing_message"
-                style="@style/AppTitleMarketingText" android:layout_gravity="center"/>
-
-        <TextView
-                android:id="@+id/text_introduction_heading"
-                android:text="@string/introduction_title"
-                style="@style/Heading1"/>
-
-        <View style="@style/LineSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_introduction_content"
-                style="@style/Body1"
-                android:text="@string/introduction_body"/>
-
-        <View style="@style/VerticalWhitespaceSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_installation_heading"
-                style="@style/Heading1"
-                android:text="@string/install_title"/>
-
-        <View style="@style/LineSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_install_body"
-                style="@style/Body1"
-                android:text="@string/install_body"/>
-
-        <View style="@style/VerticalWhitespaceSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_install_body_1"
-                style="@style/Body1"
-                android:text="@string/install_body_1"/>
-
-        <ImageView
-                style="@style/Image1"
-                app:srcCompat="@drawable/install_1"/>
-
-        <View style="@style/VerticalWhitespaceSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_install_body_2"
-                style="@style/Body1"
-                android:text="@string/install_body_2"
-        />
-
-        <ImageView
-                style="@style/Image1"
-                app:srcCompat="@drawable/install_2"/>
-
-        <View style="@style/VerticalWhitespaceSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_install_body_3"
-                style="@style/Body1"
-                android:text="@string/install_body_3"
-        />
-
-        <ImageView
-                style="@style/Image1"
-                app:srcCompat="@drawable/install_3"/>
-
-        <View style="@style/VerticalWhitespaceSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_opensource_title"
-                style="@style/Heading1"
-                android:text="@string/github_title"
-        />
-
-        <View style="@style/LineSeparator"></View>
-
-        <TextView
-                android:id="@+id/text_opensource_body"
-                style="@style/Body1"
-                android:text="@string/github_body"/>
+      <TextView
+          android:id="@+id/text_app_title"
+          android:text="@string/app_name"
+          style="@style/AppTitleText"
+          android:gravity="center_vertical"
+          android:layout_gravity="center_vertical" />
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/text_marketing_message"
+        android:text="@string/marketing_message"
+        style="@style/AppTitleMarketingText"
+        android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/text_introduction_heading"
+        android:text="@string/introduction_title"
+        style="@style/Heading1" />
+
+    <View style="@style/LineSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_introduction_content"
+        style="@style/Body1"
+        android:text="@string/introduction_body" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_installation_heading"
+        style="@style/Heading1"
+        android:text="@string/install_title" />
+
+    <View style="@style/LineSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_install_body"
+        style="@style/Body1"
+        android:text="@string/install_body" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_install_body_1"
+        style="@style/Body1"
+        android:text="@string/install_body_1" />
+
+    <ImageView
+        style="@style/Image1"
+        app:srcCompat="@drawable/install_1" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_install_body_2"
+        style="@style/Body1"
+        android:text="@string/install_body_2" />
+
+    <ImageView
+        style="@style/Image1"
+        app:srcCompat="@drawable/install_2" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_install_body_3"
+        style="@style/Body1"
+        android:text="@string/install_body_3" />
+
+    <ImageView
+        style="@style/Image1"
+        app:srcCompat="@drawable/install_3" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_opensource_title"
+        style="@style/Heading1"
+        android:text="@string/github_title" />
+
+    <View style="@style/LineSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_opensource_body"
+        style="@style/Body1"
+        android:text="@string/github_body" />
+
+  </LinearLayout>
 </ScrollView>
