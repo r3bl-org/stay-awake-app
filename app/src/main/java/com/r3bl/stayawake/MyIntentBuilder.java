@@ -18,8 +18,10 @@ package com.r3bl.stayawake;
 
 import android.content.Context;
 import android.content.Intent;
+
 import androidx.annotation.IntDef;
-import junit.framework.Assert;
+
+import org.junit.Assert;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -44,6 +46,14 @@ private @Command     int     mCommandId  = Command.INVALID;
 
 public static MyIntentBuilder getInstance(Context context) {
   return new MyIntentBuilder(context);
+}
+
+public static Intent getExplicitIntentToStartService(Context context) {
+  return getInstance(context).setCommand(Command.START).build();
+}
+
+public static Intent getExplicitIntentToStopService(Context context) {
+  return getInstance(context).setCommand(Command.STOP).build();
 }
 
 public MyIntentBuilder(Context context) {

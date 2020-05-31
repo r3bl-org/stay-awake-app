@@ -44,6 +44,14 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/button_start_awake"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:text="@string/button_start_awake"
+        android:onClick="buttonStartAwakeClicked"/>
+
     <TextView
         android:id="@+id/text_marketing_message"
         android:text="@string/marketing_message"

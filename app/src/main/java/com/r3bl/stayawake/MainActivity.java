@@ -24,6 +24,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.util.Linkify;
 import android.view.View;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.text.util.LinkifyCompat;
 
@@ -41,6 +42,7 @@ protected void onCreate(Bundle savedInstanceState) {
   //hideStatusBar();
   loadAndApplyFonts();
   formatMessages();
+  MyTileService.coldStart(this, false);
 }
 
 private void loadAndApplyFonts() {
@@ -144,5 +146,9 @@ private void setColorSpanOnTextView(TextView view,
   int i = fulltext.indexOf(subtext);
   str.setSpan(new ForegroundColorSpan(color), i, i + subtext.length(),
               Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+}
+
+public void buttonStartAwakeClicked(View view) {
+  MyTileService.coldStart(this, true);
 }
 }

@@ -68,4 +68,6 @@
         https://github.com/r3bl-alliance/stay-awake-app
     </string>
 
+  <string name="button_start_awake">Start Awake</string>
+
 </resources>

@@ -28,6 +28,10 @@ import android.os.PowerManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
+import androidx.annotation.MainThread;
+
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -57,7 +61,7 @@ public static final TimeUnit DELAY_UNIT      = TimeUnit.SECONDS;
 private long                     myTimeRunning_sec;
 private PowerManager.WakeLock    myWakeLock;
 private ScheduledExecutorService myExecutor;
-private boolean                  myIsServiceStarted;
+private boolean                  myServiceIsStarted;
 private Icon                     myIconEyeOpen;
 private Icon                     myIconEyeClosed;
 private Handler                  myHandler;
@@ -73,10 +77,25 @@ public void onCreate() {
   myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off);
   d(TAG, "onCreate: ");
 
-  // Register system broadcast receiver.
+  // Register system broadcast receiver (to handle future power connection and disconnection events).
   myReceiver = new PowerConnectionReceiver();
   registerReceiver(myReceiver, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
   registerReceiver(myReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+  d(TAG, "registerReceiver: PowerConnectionReceiver");
+
+  coldStart(this, false);
+}
+
+/**
+ * @param forceIfNotCharging If you want to start the service regardless of whether the device is currently charging
+ *                           or not then pass true here, otherwise, the service will not start if the device isn't
+ *                           charging.
+ */
+public static void coldStart(Context context, boolean forceIfNotCharging) {
+  // Check if charging, and start it.
+  if (forceIfNotCharging || isCharging(context)) {
+    context.startService(MyIntentBuilder.getExplicitIntentToStartService(context));
+  }
 }
 
 @Override
@@ -93,6 +112,7 @@ public void onDestroy() {
   // Unregister system broadcast receiver.
   if (myReceiver != null) {
     unregisterReceiver(myReceiver);
+    d(TAG, "unregisterReceiver: PowerConnectionReceiver");
   }
 }
 
@@ -129,7 +149,7 @@ public void onStopListening() {
 public void onClick() {
   super.onClick();
 
-  if (myIsServiceStarted) {
+  if (myServiceIsStarted) {
     d(TAG, "onClick: calling commandStop()");
     commandStop();
   } else {
@@ -144,37 +164,38 @@ public void onClick() {
 
 @Override
 public int onStartCommand(Intent intent, int flags, int startId) {
-  boolean containsCommand = MyIntentBuilder.containsCommand(intent);
-  d(TAG,
-    String.format(
-        "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
-        myIsServiceStarted ? "STARTED" : "NOT STARTED",
-        containsCommand ? MyIntentBuilder.getCommand(intent) : "N/A",
-        startId));
-  myIsServiceStarted = true;
+  d(TAG, getDebugIntentString(intent, startId));
   routeIntentToCommand(intent);
   return START_NOT_STICKY;
 }
 
+@NotNull private String getDebugIntentString(Intent intent, int startId) {
+  boolean containsCommand = MyIntentBuilder.containsCommand(intent);
+  return String.format(
+      "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
+      myServiceIsStarted ? "STARTED" : "NOT STARTED",
+      containsCommand ? MyIntentBuilder.getCommand(intent) : "N/A",
+      startId);
+}
+
 private void routeIntentToCommand(Intent intent) {
-  if (intent != null) {
-
-    // process command
-    if (containsCommand(intent)) {
-      processCommand(MyIntentBuilder.getCommand(intent));
-    }
-
-    // process message
-    if (MyIntentBuilder.containsMessage(intent)) {
-      processMessage(MyIntentBuilder.getMessage(intent));
-    }
+  if (intent == null) {
+    return;
+  }
+  // Process command.
+  if (containsCommand(intent)) {
+    processCommand(MyIntentBuilder.getCommand(intent));
+  }
+  // Process message.
+  if (MyIntentBuilder.containsMessage(intent)) {
+    processMessage(MyIntentBuilder.getMessage(intent));
   }
 }
 
 private void processMessage(String message) {
   try {
+    // Do nothing.
     d(TAG, String.format("doMessage: message from client: '%s'", message));
-
   } catch (Exception e) {
     e(TAG, "processMessage: exception", e);
   }
@@ -199,13 +220,21 @@ private void processCommand(int command) {
  * This method can be called directly, or by firing an explicit Intent with {@link Command#STOP}.
  */
 private void commandStop() {
-  releaseWakeLock();
-  stopForeground(true);
-  stopSelf();
-  myIsServiceStarted = false;
-  myExecutor.shutdown();
-  myExecutor = null;
-  updateTile();
+  if (!myServiceIsStarted) {
+    return;
+  }
+  try {
+    releaseWakeLock();
+    stopForeground(true);
+    stopSelf();
+    if (myExecutor != null) {
+      myExecutor.shutdown();
+      myExecutor = null;
+    }
+    updateTile();
+  } finally {
+    myServiceIsStarted = false;
+  }
 }
 
 /**
@@ -216,27 +245,38 @@ private void commandStop() {
  * details can be found in the method documentation itself.
  */
 private void commandStart() {
-
-  if (!myIsServiceStarted) {
-    moveToStartedState();
+  if (myServiceIsStarted) {
     return;
   }
+  try {
+    moveToStartedState();
+    moveToForegroundAndShowNotification();
+    acquireWakeLock();
+    startExecutor();
+  } finally {
+    myServiceIsStarted = true;
+  }
+}
 
+private void startExecutor() {
   if (myExecutor == null) {
     myTimeRunning_sec = 0;
-
-    if (isPreAndroidO()) {
-      HandleNotifications.PreO.createNotification(this);
-    } else {
-      HandleNotifications.O.createNotification(this);
-    }
-
-    acquireWakeLock();
     myExecutor = Executors.newSingleThreadScheduledExecutor();
-    myExecutor.scheduleWithFixedDelay(this::recurringTask, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT);
+    myExecutor.scheduleWithFixedDelay(() -> myHandler.post(this::recurringTask),
+                                      DELAY_INITIAL,
+                                      DELAY_RECURRING,
+                                      DELAY_UNIT);
     d(TAG, "commandStart: starting executor");
   } else {
-    d(TAG, "commandStart: do nothing");
+    d(TAG, "commandStart: executor not started");
+  }
+}
+
+private void moveToForegroundAndShowNotification() {
+  if (isPreAndroidO()) {
+    HandleNotifications.PreO.createNotification(this);
+  } else {
+    HandleNotifications.O.createNotification(this);
   }
 }
 
@@ -250,16 +290,14 @@ private void commandStart() {
  */
 @TargetApi(Build.VERSION_CODES.O)
 private void moveToStartedState() {
-
-  Intent intent = new MyIntentBuilder(this).setCommand(Command.START).build();
   if (isPreAndroidO()) {
     d(TAG,
       "moveToStartedState: Running on Android N or lower - startService(intent)");
-    startService(intent);
+    startService(MyIntentBuilder.getExplicitIntentToStartService(this));
   } else {
     d(TAG,
       "moveToStartedState: Running on Android O - startForegroundService(intent)");
-    startForegroundService(intent);
+    startForegroundService(MyIntentBuilder.getExplicitIntentToStartService(this));
   }
 }
 
@@ -280,18 +318,17 @@ private void releaseWakeLock() {
   }
 }
 
-/** This method runs in a background thread, not the main thread, in the executor */
+@MainThread
 private void recurringTask() {
-  if (isCharging()) {
+  if (isCharging(this)) {
     // Reset the countdown timer.
     myTimeRunning_sec = 0;
   } else {
     // Run down the countdown timer.
     myTimeRunning_sec++;
-
     if (myTimeRunning_sec >= MAX_TIME_SEC) {
       // Timer has run out.
-      if (isCharging()) {
+      if (isCharging(this)) {
         d(TAG, "recurringTask: timer ended but phone is charging");
       } else {
         commandStop();
@@ -302,8 +339,7 @@ private void recurringTask() {
       // d(TAG, "recurringTask: normal");
     }
   }
-
-  myHandler.post(this::updateTile);
+  updateTile();
 }
 
 private void updateTile() {
@@ -315,8 +351,8 @@ private void updateTile() {
     } else {
       setTitleToIsNotRunning(tile);
     }
+    tile.updateTile();
   }
-  tile.updateTile();
 }
 
 private void setTitleToIsNotRunning(Tile tile) {
@@ -326,7 +362,7 @@ private void setTitleToIsNotRunning(Tile tile) {
 }
 
 private void setTileToIsRunning(Tile tile) {
-  if (isCharging()) {
+  if (isCharging(this)) {
     tile.setState(Tile.STATE_ACTIVE);
     tile.setIcon(myIconEyeOpen);
     tile.setLabel(getString(R.string.tile_active_charging_text));
@@ -361,16 +397,18 @@ private String formatTime(long time_sec) {
   }
 }
 
-private boolean isCharging() {
+/**
+ * More info: https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC
+ */
+private static boolean isCharging(Context context) {
   IntentFilter intentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-  Intent
-      batteryStatus =
-      getApplicationContext().registerReceiver(null, intentFilter);
+  Intent batteryStatus = context.getApplicationContext().registerReceiver(null, intentFilter);
   int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-  boolean isCharging =
-      status == BatteryManager.BATTERY_STATUS_CHARGING
-      || status == BatteryManager.BATTERY_STATUS_FULL;
-  return isCharging;
+  return status == BatteryManager.BATTERY_STATUS_CHARGING ||
+         status == BatteryManager.BATTERY_STATUS_FULL ||
+         status == BatteryManager.BATTERY_PLUGGED_AC ||
+         status == BatteryManager.BATTERY_PLUGGED_WIRELESS ||
+         status == BatteryManager.BATTERY_PLUGGED_USB;
 }
 
 public static int getRandomNumber() {

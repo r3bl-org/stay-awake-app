@@ -17,7 +17,11 @@
 package com.r3bl.stayawake;
 
 import android.annotation.TargetApi;
-import android.app.*;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 
@@ -36,8 +40,10 @@ public static final int STOP_ACTION_ICON        = R.drawable.ic_stat_flare;
 
 /** PendingIntent to stop the service. */
 private static PendingIntent getPendingIntentToStopService(Service context) {
-  Intent intentToStopService = new MyIntentBuilder(context).setCommand(Command.STOP).build();
-  return PendingIntent.getService(context, getRandomNumber(), intentToStopService, 0);
+  return PendingIntent.getService(context,
+                                  getRandomNumber(),
+                                  MyIntentBuilder.getExplicitIntentToStopService(context),
+                                  0);
 }
 
 /** Get pending intent to launch the activity. */
