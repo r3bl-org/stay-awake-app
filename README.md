@@ -8,7 +8,7 @@ works on Android O (with the new background behaviors).
 License
 -------
 
-Copyright 2017 R3BL, LLC.
+Copyright 2020 R3BL, LLC.
 
 Licensed to the Apache Software Foundation (ASF) under one or more contributor
 license agreements.  See the NOTICE file distributed with this work for

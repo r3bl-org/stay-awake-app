@@ -27,7 +27,6 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.util.Log;
 
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -39,60 +38,52 @@ import static android.util.Log.e;
 import static com.r3bl.stayawake.MyIntentBuilder.containsCommand;
 
 /**
- * This is a bound and started service. TileService is a bound service, and it
- * automatically binds
- * to the Settings Tile. Since this service also holds a WakeLock, this part of
- * it happens in the
- * started service, which also displays a persistent notification, and takes
- * care of starting
- * itself.
+ * This is a bound and started service. TileService is a bound service, and it automatically binds to the Settings Tile.
+ * Since this service also holds a WakeLock, this part of it happens in the started service, which also displays a
+ * persistent notification, and takes care of starting itself.
  */
 public class MyTileService extends TileService {
 
 // Constants.
 
 public static final String   TAG             = "SA_MyService";
-public static final long
-                             MAX_TIME_SEC    =
-    TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES);
+public static final long     MAX_TIME_SEC    = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES);
 public static final int      DELAY_INITIAL   = 0;
 public static final int      DELAY_RECURRING = 1;
 public static final TimeUnit DELAY_UNIT      = TimeUnit.SECONDS;
 
 // Data.
 
-private long                     mTimeRunning_sec;
-private PowerManager.WakeLock    wakeLock;
-private ScheduledExecutorService mExecutor;
-private boolean                  mServiceIsStarted;
-private Icon                     mIconEyeOpen;
-private Icon                     mIconEyeClosed;
-private Handler                  mHandler;
-private PowerConnectionReceiver  receiver;
+private long                     myTimeRunning_sec;
+private PowerManager.WakeLock    myWakeLock;
+private ScheduledExecutorService myExecutor;
+private boolean                  myIsServiceStarted;
+private Icon                     myIconEyeOpen;
+private Icon                     myIconEyeClosed;
+private Handler                  myHandler;
+private PowerConnectionReceiver  myReceiver;
 
 // General service code.
 
 @Override
 public void onCreate() {
   super.onCreate();
-  mHandler = new Handler();
-  mIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility);
-  mIconEyeClosed =
-      Icon.createWithResource(this, R.drawable.ic_stat_visibility_off);
+  myHandler = new Handler();
+  myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility);
+  myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off);
   d(TAG, "onCreate: ");
 
   // Register system broadcast receiver.
-  receiver = new PowerConnectionReceiver();
-  registerReceiver(receiver, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
-  registerReceiver(receiver,
-                   new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+  myReceiver = new PowerConnectionReceiver();
+  registerReceiver(myReceiver, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+  registerReceiver(myReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
 }
 
 @Override
 public void onDestroy() {
   super.onDestroy();
-  if (mExecutor != null) {
-    mExecutor.shutdownNow();
+  if (myExecutor != null) {
+    myExecutor.shutdownNow();
     d(TAG, "onDestroy: stopping executor");
   } else {
     d(TAG, "onDestroy: do nothing");
@@ -100,8 +91,8 @@ public void onDestroy() {
   updateTile();
 
   // Unregister system broadcast receiver.
-  if (receiver != null) {
-    unregisterReceiver(receiver);
+  if (myReceiver != null) {
+    unregisterReceiver(myReceiver);
   }
 }
 
@@ -138,7 +129,7 @@ public void onStopListening() {
 public void onClick() {
   super.onClick();
 
-  if (mServiceIsStarted) {
+  if (myIsServiceStarted) {
     d(TAG, "onClick: calling commandStop()");
     commandStop();
   } else {
@@ -154,14 +145,13 @@ public void onClick() {
 @Override
 public int onStartCommand(Intent intent, int flags, int startId) {
   boolean containsCommand = MyIntentBuilder.containsCommand(intent);
-  d(
-      TAG,
-      String.format(
-          "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
-          mServiceIsStarted ? "STARTED" : "NOT STARTED",
-          containsCommand ? MyIntentBuilder.getCommand(intent) : "N/A",
-          startId));
-  mServiceIsStarted = true;
+  d(TAG,
+    String.format(
+        "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
+        myIsServiceStarted ? "STARTED" : "NOT STARTED",
+        containsCommand ? MyIntentBuilder.getCommand(intent) : "N/A",
+        startId));
+  myIsServiceStarted = true;
   routeIntentToCommand(intent);
   return START_NOT_STICKY;
 }
@@ -206,42 +196,34 @@ private void processCommand(int command) {
 }
 
 /**
- * This method can be called directly, or by firing an explicit Intent with
- * {@link
- * Command#STOP}.
+ * This method can be called directly, or by firing an explicit Intent with {@link Command#STOP}.
  */
 private void commandStop() {
   releaseWakeLock();
   stopForeground(true);
   stopSelf();
-  mServiceIsStarted = false;
-  mExecutor.shutdown();
-  mExecutor = null;
+  myIsServiceStarted = false;
+  myExecutor.shutdown();
+  myExecutor = null;
   updateTile();
 }
 
 /**
- * This can be called via an explicit intent to start this serivce, which calls
- * {@link
- * #onStartCommand(Intent, int, int)} or it can be called directly, which is
- * what happens in
- * {@link #onClick()} by this bound service.
- *
+ * This can be called via an explicit intent to start this serivce, which calls {@link #onStartCommand(Intent, int,
+ * int)} or it can be called directly, which is what happens in {@link #onClick()} by this bound service.
  * <p>
- *
- * <p>This is why the service needs to {@link #moveToStartedState()} if it's not
- * already in a
- * started state. More details can be found in the method documentation itself.
+ * <p>This is why the service needs to {@link #moveToStartedState()} if it's not already in a started state. More
+ * details can be found in the method documentation itself.
  */
 private void commandStart() {
 
-  if (!mServiceIsStarted) {
+  if (!myIsServiceStarted) {
     moveToStartedState();
     return;
   }
 
-  if (mExecutor == null) {
-    mTimeRunning_sec = 0;
+  if (myExecutor == null) {
+    myTimeRunning_sec = 0;
 
     if (isPreAndroidO()) {
       HandleNotifications.PreO.createNotification(this);
@@ -250,18 +232,8 @@ private void commandStart() {
     }
 
     acquireWakeLock();
-    mExecutor = Executors.newSingleThreadScheduledExecutor();
-    Runnable runnable =
-        new Runnable() {
-          @Override
-          public void run() {
-            recurringTask();
-          }
-        };
-    mExecutor.scheduleWithFixedDelay(runnable,
-                                     DELAY_INITIAL,
-                                     DELAY_RECURRING,
-                                     DELAY_UNIT);
+    myExecutor = Executors.newSingleThreadScheduledExecutor();
+    myExecutor.scheduleWithFixedDelay(this::recurringTask, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT);
     d(TAG, "commandStart: starting executor");
   } else {
     d(TAG, "commandStart: do nothing");
@@ -269,50 +241,41 @@ private void commandStart() {
 }
 
 /**
- * If a call is made to {@link #commandStart()} without firing an explicit
- * Intent to put this
- * service in a started state (which happens in {@link #onClick()}), then fire
- * the explicit
- * intent with {@link Command#START} which actually ends up calling {@link
- * #commandStart()}
- * again and this time, does the work of creating the executor.
- *
+ * If a call is made to {@link #commandStart()} without firing an explicit Intent to put this service in a started state
+ * (which happens in {@link #onClick()}), then fire the explicit intent with {@link Command#START} which actually ends
+ * up calling {@link #commandStart()} again and this time, does the work of creating the executor.
  * <p>
- *
- * <p>Next, you would move this service into the foreground, which you can't do
- * unless this
- * service is in a started state.
+ * <p>Next, you would move this service into the foreground, which you can't do unless this service is in a started
+ * state.
  */
 @TargetApi(Build.VERSION_CODES.O)
 private void moveToStartedState() {
 
   Intent intent = new MyIntentBuilder(this).setCommand(Command.START).build();
   if (isPreAndroidO()) {
-    Log.d(TAG,
-          "moveToStartedState: Running on Android N or lower - startService(intent)");
+    d(TAG,
+      "moveToStartedState: Running on Android N or lower - startService(intent)");
     startService(intent);
   } else {
-    Log.d(TAG,
-          "moveToStartedState: Running on Android O - startForegroundService(intent)");
+    d(TAG,
+      "moveToStartedState: Running on Android O - startForegroundService(intent)");
     startForegroundService(intent);
   }
 }
 
 private void acquireWakeLock() {
-  if (wakeLock == null) {
-    PowerManager
-        powerManager =
-        (PowerManager) getSystemService(Context.POWER_SERVICE);
-    wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
-    wakeLock.acquire();
+  if (myWakeLock == null) {
+    PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+    myWakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG);
+    myWakeLock.acquire();
     d(TAG, "acquireWakeLock: ");
   }
 }
 
 private void releaseWakeLock() {
-  if (wakeLock != null) {
-    wakeLock.release();
-    wakeLock = null;
+  if (myWakeLock != null) {
+    myWakeLock.release();
+    myWakeLock = null;
     d(TAG, "releaseWakeLock: ");
   }
 }
@@ -321,12 +284,12 @@ private void releaseWakeLock() {
 private void recurringTask() {
   if (isCharging()) {
     // Reset the countdown timer.
-    mTimeRunning_sec = 0;
+    myTimeRunning_sec = 0;
   } else {
     // Run down the countdown timer.
-    mTimeRunning_sec++;
+    myTimeRunning_sec++;
 
-    if (mTimeRunning_sec >= MAX_TIME_SEC) {
+    if (myTimeRunning_sec >= MAX_TIME_SEC) {
       // Timer has run out.
       if (isCharging()) {
         d(TAG, "recurringTask: timer ended but phone is charging");
@@ -340,43 +303,37 @@ private void recurringTask() {
     }
   }
 
-  mHandler.post(
-      new Runnable() {
-        @Override
-        public void run() {
-          updateTile();
-        }
-      });
+  myHandler.post(this::updateTile);
 }
 
 private void updateTile() {
   Tile tile = getQsTile();
-  boolean isRunning = (mExecutor != null && !mExecutor.isShutdown());
+  boolean isRunning = (myExecutor != null && !myExecutor.isShutdown());
   if (tile != null) {
     if (isRunning) {
-      _isRunning(tile);
+      setTileToIsRunning(tile);
     } else {
-      _isNotRunning(tile);
+      setTitleToIsNotRunning(tile);
     }
   }
   tile.updateTile();
 }
 
-private void _isNotRunning(Tile tile) {
+private void setTitleToIsNotRunning(Tile tile) {
   tile.setState(Tile.STATE_INACTIVE);
-  tile.setIcon(mIconEyeClosed);
+  tile.setIcon(myIconEyeClosed);
   tile.setLabel(getString(R.string.tile_inactive_text));
 }
 
-private void _isRunning(Tile tile) {
+private void setTileToIsRunning(Tile tile) {
   if (isCharging()) {
     tile.setState(Tile.STATE_ACTIVE);
-    tile.setIcon(mIconEyeOpen);
+    tile.setIcon(myIconEyeOpen);
     tile.setLabel(getString(R.string.tile_active_charging_text));
   } else {
     tile.setState(Tile.STATE_ACTIVE);
-    tile.setIcon(mIconEyeOpen);
-    long timeRemaining = MAX_TIME_SEC - mTimeRunning_sec;
+    tile.setIcon(myIconEyeOpen);
+    long timeRemaining = MAX_TIME_SEC - myTimeRunning_sec;
     final String formatTime = formatTime(timeRemaining);
     tile.setLabel(getString(R.string.tile_active_text, formatTime));
   }

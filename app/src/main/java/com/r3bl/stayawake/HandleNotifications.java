@@ -28,9 +28,7 @@ import static com.r3bl.stayawake.MyTileService.getRandomNumber;
 
 public class HandleNotifications {
 
-//
 // Common stuff.
-//
 
 public static final int ONGOING_NOTIFICATION_ID = getRandomNumber();
 public static final int SMALL_ICON              = R.drawable.ic_stat_visibility;
@@ -63,9 +61,7 @@ private static PendingIntent getLaunchActivityPI(Service context) {
   return piLaunchMainActivity;
 }
 
-//
 // Pre O specific.
-//
 
 @TargetApi(25)
 public static class PreO {

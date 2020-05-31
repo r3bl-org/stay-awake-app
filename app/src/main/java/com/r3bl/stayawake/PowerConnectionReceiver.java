@@ -21,26 +21,35 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import static android.util.Log.d;
+import static com.r3bl.stayawake.MyTileService.TAG;
+
 /** Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg */
 public class PowerConnectionReceiver extends BroadcastReceiver {
 public void onReceive(Context context, Intent intent) {
-  Log.d(MyTileService.TAG, "");
   String action = intent.getAction();
-  if (action.equals(Intent.ACTION_POWER_CONNECTED)) {
-    // Start service when power connected.
-    Log.d(MyTileService.TAG,
-          "PowerConnectionReceiver onReceive(): ACTION_POWER_CONNECTED");
-    Log.d(MyTileService.TAG, "Start Service");
-    Intent
-        iStartService =
-        new MyIntentBuilder(context).setCommand(Command.START).build();
-    context.startService(iStartService);
-  } else if (action.equals(Intent.ACTION_POWER_DISCONNECTED)) {
-    // Do nothing when power disconnected.
-    Log.d(
-        MyTileService.TAG,
-        "PowerConnectionReceiver onReceive(): ACTION_POWER_DISCONNECTED");
-    Log.d(MyTileService.TAG, "Do nothing");
+  d(TAG, "onReceive: Action=" + action);
+  switch (action) {
+    case Intent.ACTION_POWER_CONNECTED:
+      powerConnected(context);
+      break;
+    case Intent.ACTION_POWER_DISCONNECTED:
+      powerDisconnected();
+      break;
   }
+}
+
+// Do nothing when power disconnected.
+private void powerDisconnected() {
+  d(TAG, "PowerConnectionReceiver onReceive(): ACTION_POWER_DISCONNECTED");
+  d(TAG, "Do nothing");
+}
+
+// Start service when power connected.
+private void powerConnected(Context context) {
+  d(TAG, "PowerConnectionReceiver onReceive(): ACTION_POWER_CONNECTED");
+  d(TAG, "Start Service");
+  Intent startServiceIntent = new MyIntentBuilder(context).setCommand(Command.START).build();
+  context.startService(startServiceIntent);
 }
 }
