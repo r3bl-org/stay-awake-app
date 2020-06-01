@@ -70,4 +70,6 @@
 
   <string name="button_start_awake">Start Awake</string>
 
+  <string name="msg_activate_awake_app_manually">Please start the Awake app, or activate it using its quick tile</string>
+
 </resources>

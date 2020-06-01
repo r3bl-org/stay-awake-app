@@ -32,6 +32,9 @@ import androidx.annotation.MainThread;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -40,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import static android.util.Log.d;
 import static android.util.Log.e;
 import static com.r3bl.stayawake.MyIntentBuilder.containsCommand;
+import static com.r3bl.stayawake.PowerConnectionReceiver.showToast;
 
 /**
  * This is a bound and started service. TileService is a bound service, and it automatically binds to the Settings Tile.
@@ -86,6 +90,34 @@ public void onCreate() {
   coldStart(this, false);
 }
 
+public static void startService(Context context) {
+  try {
+    context.startService(MyIntentBuilder.getExplicitIntentToStartService(context));
+  } catch (IllegalStateException e) {
+    // More info: https://developer.android.com/about/versions/oreo/background
+    dumpException(e, "Service can't be started, because app is current in background");
+    showToast(context, context.getString(R.string.msg_activate_awake_app_manually));
+  }
+}
+
+public static void stopService(Context context) {
+  try {
+    context.startService(MyIntentBuilder.getExplicitIntentToStopService(context));
+  } catch (IllegalStateException e) {
+    // More info: https://developer.android.com/about/versions/oreo/background
+    dumpException(e, "Service can't be stopped, because app is current in background");
+  }
+}
+
+private static void dumpException(IllegalStateException exception, String message) {
+  e(TAG, message);
+  Writer buffer = new StringWriter();
+  PrintWriter pw = new PrintWriter(buffer);
+  exception.printStackTrace(pw);
+  e(TAG, buffer.toString());
+  pw.close();
+}
+
 /**
  * @param forceIfNotCharging If you want to start the service regardless of whether the device is currently charging
  *                           or not then pass true here, otherwise, the service will not start if the device isn't
@@ -94,7 +126,7 @@ public void onCreate() {
 public static void coldStart(Context context, boolean forceIfNotCharging) {
   // Check if charging, and start it.
   if (forceIfNotCharging || isCharging(context)) {
-    context.startService(MyIntentBuilder.getExplicitIntentToStartService(context));
+    startService(context);
   }
 }
 

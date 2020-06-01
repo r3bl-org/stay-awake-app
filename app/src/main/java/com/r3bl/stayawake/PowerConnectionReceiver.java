@@ -19,6 +19,7 @@ package com.r3bl.stayawake;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.Toast;
 
 import static android.util.Log.d;
 import static com.r3bl.stayawake.MyTileService.TAG;
@@ -31,7 +32,7 @@ private Context context;
 public void onReceive(Context context, Intent intent) {
   this.context = context;
   String action = intent.getAction();
-  String msg1 = "onReceive: Action=" + action;
+  String msg1 = "onReceive: PowerConnectionReceiver Action=" + action;
   d(TAG, msg1);
   switch (action) {
     case Intent.ACTION_POWER_CONNECTED:
@@ -41,28 +42,28 @@ public void onReceive(Context context, Intent intent) {
       powerDisconnected();
       break;
     default:
-      showDebugToast(msg1);
+      //showToast(context, msg1);
       break;
   }
 }
 
 // Do nothing when power disconnected.
 private void powerDisconnected() {
-  context.startService(MyIntentBuilder.getExplicitIntentToStopService(context));
-  String msg1 = "PowerConnectionReceiver onReceive(): ACTION_POWER_DISCONNECTED ... Stop Service";
-  showDebugToast(msg1);
+  MyTileService.stopService(context);
+  String msg1 = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service";
+  //showDebugToast(context, msg1);
   d(TAG, msg1);
 }
 
 // Start service when power connected.
 private void powerConnected() {
-  context.startService(MyIntentBuilder.getExplicitIntentToStartService(context));
-  String msg1 = "PowerConnectionReceiver onReceive(): ACTION_POWER_CONNECTED ... Start Service";
-  showDebugToast(msg1);
+  MyTileService.startService(context);
+  String msg1 = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service";
+  //showDebugToast(context, msg1);
   d(TAG, msg1);
 }
 
-private void showDebugToast(String msg1) {
-  //Toast.makeText(context, msg1, Toast.LENGTH_LONG).show();
+public static void showToast(Context context, String msg1) {
+  Toast.makeText(context, msg1, Toast.LENGTH_LONG).show();
 }
 }
