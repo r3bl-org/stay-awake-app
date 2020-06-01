@@ -87,7 +87,9 @@ public void onCreate() {
   registerReceiver(myReceiver, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
   d(TAG, "registerReceiver: PowerConnectionReceiver");
 
-  coldStart(this, false);
+  if (isCharging(this)) {
+    commandStart();
+  }
 }
 
 public static void startService(Context context) {
