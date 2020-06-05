@@ -25,8 +25,7 @@ captures/
 *.jks
 
 # Signed APKs
-app
-keys
+google-play-store
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
