@@ -19,49 +19,57 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.util.Log
+import android.util.Log.d
 
 /** Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg */
-class PowerConnectionReceiver : BroadcastReceiver() {
-  private lateinit var myContext: Context
+class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceiver() {
+  /* Register system broadcast receiver (to handle future power connection and disconnection events). */
+  init {
+    myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_CONNECTED))
+    myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
+    d(MyTileService.TAG, "registerReceiver: PowerConnectionReceiver")
+  }
+
+  fun unregister() {
+    myContext.unregisterReceiver(this)
+  }
+
   override fun onReceive(context: Context, intent: Intent) {
-    myContext = context
-    val action = intent.action
-    val message = "onReceive: PowerConnectionReceiver Action=$action"
-    Log.d(MyTileService.TAG, message)
-    when (action) {
-      Intent.ACTION_POWER_CONNECTED    -> powerConnected()
-      Intent.ACTION_POWER_DISCONNECTED -> powerDisconnected()
-      else                             -> {
+    intent.action?.let { action ->
+      val message = "onReceive: PowerConnectionReceiver Action=$action"
+      d(MyTileService.TAG, message)
+      when (action) {
+        Intent.ACTION_POWER_CONNECTED    -> onPowerConnected()
+        Intent.ACTION_POWER_DISCONNECTED -> onPowerDisconnected()
       }
     }
   }
 
-  /** Stop service when power disconnected. */
-  private fun powerDisconnected() {
-    MyTileService.stopService(myContext)
-    val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
-    //showToast(context, msg1);
-    Log.d(MyTileService.TAG, message)
+  private fun onPowerConnected() {
+    if (MyTileServiceSettings.autoStartEnabled) {
+      MyTileService.startService(myContext)
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
+      // showToast(myContext, message)
+      d(MyTileService.TAG, message)
+    }
+    else {
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Do nothing, auto start disabled"
+      // showToast(myContext, message)
+      d(MyTileService.TAG, message)
+    }
   }
 
-  /** Start the [TileService] when power is connected. */
-  private fun powerConnected() {
-    MyTileService.startService(myContext)
-    val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
-    //showToast(context, msg1);
-    Log.d(MyTileService.TAG, message)
-  }
-
-  fun register(context: Context) {
-    // Register system broadcast receiver (to handle future power connection and disconnection events).
-    context.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_CONNECTED))
-    context.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
-    Log.d(MyTileService.TAG, "registerReceiver: PowerConnectionReceiver")
-
-  }
-
-  fun unregister(context: Context) {
-    context.unregisterReceiver(this)
+  private fun onPowerDisconnected() {
+    if (MyTileServiceSettings.autoStartEnabled) {
+      MyTileService.stopService(myContext)
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
+      // showToast(myContext, message)
+      d(MyTileService.TAG, message)
+    }
+    else {
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Do nothing, auto start disabled"
+      // showToast(myContext, message)
+      d(MyTileService.TAG, message)
+    }
   }
 }

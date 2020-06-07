@@ -15,19 +15,49 @@
  */
 package com.r3bl.stayawake
 
+import android.util.Log.d
+import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.style.ForegroundColorSpan
 import android.text.util.Linkify
 import android.view.View
+import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.util.LinkifyCompat
+import com.r3bl.stayawake.MyTileService.Companion.TAG
+import com.r3bl.stayawake.MyTileService.Companion.coldStart
+import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
+import com.r3bl.stayawake.MyTileServiceSettings.saveSharedPreferencesAfterRunningLambda
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_main.spinner_timeout
+import kotlinx.android.synthetic.main.activity_main.view.*
 import java.util.concurrent.TimeUnit
 
+/** More info: https://stackoverflow.com/a/25510848/2085356 */
+private class MySpinnerAdapter(context: Context, resource: Int, items: List<String>, private val font: Typeface) :
+  ArrayAdapter<String>(context, resource, items) {
+  // Affects default (closed) state of the spinner.
+  override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+      (super.getView(position, convertView, parent) as TextView).apply { typeface = font }
+
+  // Affects opened state of the spinner.
+  override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View =
+      (super.getDropDownView(position, convertView, parent) as TextView).apply { typeface = font }
+}
+
+
 class MainActivity : AppCompatActivity() {
+  private lateinit var typeNotoSansRegular: Typeface
+  private lateinit var typeNotoSansBold: Typeface
+  private lateinit var typeTitilumWebLight: Typeface
+  private lateinit var typeTitilumWebRegular: Typeface
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -35,14 +65,22 @@ class MainActivity : AppCompatActivity() {
     //hideStatusBar();
     loadAndApplyFonts()
     formatMessages()
-    MyTileService.coldStart(this, false)
+    coldStart(this, false)
+    loadSharedPreferences(this)
+    setupCheckbox()
+    setupSpinner(typeNotoSansRegular)
+  }
+
+  private fun setupCheckbox() {
+    checkbox_prefs_auto_start.isChecked = MyTileServiceSettings.autoStartEnabled
+    d(TAG, "setupCheckbox: set checkbox state to: ${MyTileServiceSettings.autoStartEnabled}")
   }
 
   private fun loadAndApplyFonts() {
-    val typeNotoSansRegular = Typeface.createFromAsset(assets, "fonts/notosans_regular.ttf")
-    val typeNotoSansBold = Typeface.createFromAsset(assets, "fonts/notosans_bold.ttf")
-    val typeTitilumWebLight = Typeface.createFromAsset(assets, "fonts/titilliumweb_light.ttf")
-    val typeTitilumWebRegular = Typeface.createFromAsset(assets, "fonts/titilliumweb_regular.ttf")
+    typeNotoSansRegular = Typeface.createFromAsset(assets, "fonts/notosans_regular.ttf")
+    typeNotoSansBold = Typeface.createFromAsset(assets, "fonts/notosans_bold.ttf")
+    typeTitilumWebLight = Typeface.createFromAsset(assets, "fonts/titilliumweb_light.ttf")
+    typeTitilumWebRegular = Typeface.createFromAsset(assets, "fonts/titilliumweb_regular.ttf")
 
     listOf<TextView>(text_app_title).forEach { it.typeface = typeNotoSansBold }
 
@@ -52,13 +90,50 @@ class MainActivity : AppCompatActivity() {
       it.typeface = typeTitilumWebRegular
     }
 
-    listOf<TextView>(text_introduction_content,
+    listOf<TextView>(text_spinner_timeout_description,
+                     button_start_awake,
+                     checkbox_prefs_auto_start,
+                     text_introduction_content,
                      text_install_body,
                      text_install_body_1,
                      text_install_body_2,
                      text_install_body_3,
                      text_opensource_body).forEach {
       it.typeface = typeNotoSansRegular
+    }
+  }
+
+  private fun setupSpinner(font: Typeface) = with(spinner_timeout) {
+    // Create custom adatper to handle font.
+    val myAdapter = MySpinnerAdapter(this@MainActivity,
+                                     android.R.layout.simple_spinner_item,
+                                     resources.getStringArray(R.array.spinner_timeout_choices).toList(),
+                                     font)
+    adapter = myAdapter
+
+    // Restore saved selection.
+    val savedTimeoutInSec: Long = MyTileServiceSettings.timeoutNotChargingSec
+    val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
+    val position = myAdapter.getPosition(savedTimeoutInMin.toString())
+    if (position != -1) {
+      spinner_timeout.setSelection(position)
+      formatMessages()
+      d(TAG, "setupSpinner: set spinner selection to position: $position")
+    }
+
+    // Attach listeners to handle user selection.
+    spinner_timeout.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+      override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+      override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        val selectionInMin: String = parent?.getItemAtPosition(position).toString()
+        val selectionInSec: Long = TimeUnit.SECONDS.convert(selectionInMin.toLong(), TimeUnit.MINUTES)
+        saveSharedPreferencesAfterRunningLambda(this@MainActivity) {
+          timeoutNotChargingSec = selectionInSec.toLong()
+        }
+        formatMessages()
+        d(TAG, "onItemSelected: spinner selection is $selectionInMin")
+      }
     }
   }
 
@@ -80,7 +155,7 @@ class MainActivity : AppCompatActivity() {
 
   private fun formatMessages() {
     // Add actual minutes to string template.
-    val hours = TimeUnit.SECONDS.toMinutes(MyTileService.MAX_TIME_SEC)
+    val hours = TimeUnit.SECONDS.toMinutes(MyTileServiceSettings.timeoutNotChargingSec)
     text_introduction_content.text = getString(R.string.introduction_body, hours)
 
     // Linkify github link.
@@ -110,8 +185,9 @@ class MainActivity : AppCompatActivity() {
     str.setSpan(ForegroundColorSpan(color), i, i + subtext.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  fun buttonStartAwakeClicked(ignore: View) {
-    MyTileService.coldStart(this, true)
-  }
+  fun buttonStartAwakeClicked(ignore: View) = coldStart(this, true)
 
+  fun checkboxClicked(view: View) = (view as CheckBox).let { checkbox ->
+    saveSharedPreferencesAfterRunningLambda(this) { autoStartEnabled = checkbox.isChecked }
+  }
 }

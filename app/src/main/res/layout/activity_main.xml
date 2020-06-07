@@ -52,6 +52,39 @@
         android:text="@string/button_start_awake"
         android:onClick="buttonStartAwakeClicked"/>
 
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+      <Spinner
+          android:id="@+id/spinner_timeout"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          />
+
+      <TextView
+          android:id="@+id/text_spinner_timeout_description"
+          android:layout_height="wrap_content"
+          android:layout_width="wrap_content"
+          android:text="@string/spinner_timeout_description"
+          />
+
+    </LinearLayout>
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <CheckBox
+        android:id="@+id/checkbox_prefs_auto_start"
+        android:text="@string/checkbox_prefs_auto_start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="checkboxClicked" />
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
     <TextView
         android:id="@+id/text_marketing_message"
         android:text="@string/marketing_message"

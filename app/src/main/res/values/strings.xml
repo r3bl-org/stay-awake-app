@@ -27,9 +27,21 @@
   <string name="notification_channel_name">Awake Notifications</string>
   <string name="notification_channel_id">awake_channel_id</string>
 
+  <string name="prefs_auto_start_enabled">auto_start_enabled</string>
+  <string name="prefs_timeout_not_charging_sec">timeout_not_charging_sec</string>
+
   <string name="button_start_awake">Start Awake</string>
 
+  <string name="checkbox_prefs_auto_start">Auto start when charging</string>
+
   <string name="msg_activate_awake_app_manually">Please start the Awake app, or activate it using its quick tile</string>
+
+  <string name="spinner_timeout_description">Minutes that Awake can run on battery</string>
+  <string-array name="spinner_timeout_choices">
+    <item>5</item>
+    <item>10</item>
+    <item>30</item>
+  </string-array>
 
   <string name="marketing_message">
         Keep your screen\non while charging

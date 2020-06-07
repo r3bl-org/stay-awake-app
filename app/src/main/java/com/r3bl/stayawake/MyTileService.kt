@@ -26,11 +26,14 @@ import android.os.Build
 import android.os.Handler
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.util.Log.d
+import android.widget.CheckBox
 import androidx.annotation.MainThread
+import com.r3bl.stayawake.MyTileService.Companion.TAG
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.io.Writer
@@ -38,11 +41,39 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
+object MyTileServiceSettings {
+  var autoStartEnabled: Boolean = true
+  var timeoutNotChargingSec: Long = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES)
+
+  fun loadSharedPreferences(context: Context) = with(context) {
+    with(getDefaultSharedPreferences(this)) {
+      autoStartEnabled = getBoolean(getString(R.string.prefs_auto_start_enabled), autoStartEnabled)
+      timeoutNotChargingSec = getLong(getString(R.string.prefs_timeout_not_charging_sec), timeoutNotChargingSec)
+      d(TAG, "loadSharedPreferences, autoStartEnabled = ${autoStartEnabled}")
+    }
+  }
+
+  private fun saveSharedPreferences(context: Context) = with(context) {
+    with(getDefaultSharedPreferences(this)) {
+      with(edit()) {
+        putBoolean(getString(R.string.prefs_auto_start_enabled), autoStartEnabled)
+        putLong(getString(R.string.prefs_timeout_not_charging_sec), timeoutNotChargingSec)
+        commit()
+      }
+    }
+  }
+
+  fun saveSharedPreferencesAfterRunningLambda(context: Context, lambda: MyTileServiceSettings.() -> Unit) {
+    lambda(this)
+    saveSharedPreferences(context)
+    d(TAG, "saveSharedPreferences, autoStartEnabled = $autoStartEnabled, timeoutNotChargingSec = $timeoutNotChargingSec")
+  }
+}
+
 /**
  * This is a bound and started service. TileService is a bound service, and it automatically binds to the Settings Tile.
  * Since this service also holds a WakeLock, this part of it happens in the started service, which also displays a
  * persistent notification, and takes care of starting itself.
- *
  *
  * If the user has added this quick tile to their notification drawer, then [onCreate] will be called when the device
  * boots. This in turn attaches the [PowerConnection] which allows Awake to start automatically when the device
@@ -66,7 +97,7 @@ class MyTileService : TileService() {
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
     d(TAG, "onCreate: ")
-    myReceiver = PowerConnectionReceiver().apply { register(this@MyTileService) }
+    myReceiver = PowerConnectionReceiver(this)
     if (isCharging(this)) commandStart()
   }
 
@@ -79,7 +110,7 @@ class MyTileService : TileService() {
     }
     updateTile()
     myReceiver?.apply {
-      unregister(this@MyTileService)
+      unregister()
       d(TAG, "unregisterReceiver: PowerConnectionReceiver")
     }
   }
@@ -285,7 +316,7 @@ class MyTileService : TileService() {
     else {
       // Run down the countdown timer.
       myTimeRunning_sec++
-      if (myTimeRunning_sec >= MAX_TIME_SEC) {
+      if (myTimeRunning_sec >= MyTileServiceSettings.timeoutNotChargingSec) {
         // Timer has run out.
         if (isCharging(this)) {
           d(TAG, "recurringTask: timer ended but phone is charging")
@@ -332,7 +363,7 @@ class MyTileService : TileService() {
     else {
       tile.state = Tile.STATE_ACTIVE
       tile.icon = myIconEyeOpen
-      val timeRemaining = MAX_TIME_SEC - myTimeRunning_sec
+      val timeRemaining = MyTileServiceSettings.timeoutNotChargingSec - myTimeRunning_sec
       val formatTime = formatTime(timeRemaining)
       tile.label = getString(R.string.tile_active_text, formatTime)
     }
@@ -359,7 +390,6 @@ class MyTileService : TileService() {
 
   companion object {
     const val TAG = "SA_MyService"
-    val MAX_TIME_SEC = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES)
     const val DELAY_INITIAL = 0
     const val DELAY_RECURRING = 1
     val DELAY_UNIT = TimeUnit.SECONDS
@@ -423,4 +453,4 @@ class MyTileService : TileService() {
     val isPreAndroidO: Boolean
       get() = Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1
   }
-} // end class MyTileService.
+}
