@@ -21,6 +21,7 @@ import androidx.annotation.IntDef
 import com.r3bl.stayawake.CommandId.Companion.START
 import com.r3bl.stayawake.CommandId.Companion.STOP
 import org.junit.Assert
+import java.lang.IllegalStateException
 
 /**
  * Command enumeration using [IntDef]. More info:
@@ -37,45 +38,59 @@ annotation class CommandId {
   }
 }
 
-class MyIntentBuilder(private val context: Context?) {
-  private data class Command(@CommandId var id: Int = CommandId.INVALID, var message: String? = null)
+private enum class Keys { Message, CommandId }
 
-  private val command: Command = Command()
+private data class Command(@CommandId val id: Int, val message: String?) {
+  fun toIntent(context: Context): Intent {
+    val intent = Intent(context, MyTileService::class.java)
+    if (id != CommandId.INVALID) intent.putExtra(Keys.CommandId.name, id)
+    if (message != null) intent.putExtra(Keys.Message.name, message)
+    return intent
+  }
+}
 
-  fun setMessage(message: String): MyIntentBuilder = this.apply { command.message = message }
+class MyIntentBuilder {
+  /** Don't use [CommandId.INVALID] as a param. If you do then this method does nothing. */
+  @CommandId
+  var commandId: Int = CommandId.INVALID
 
-  /**
-   * @param id Don't use [CommandId.INVALID] as a param. If you do then this method does nothing.
-   */
-  fun setCommand(@CommandId id: Int): MyIntentBuilder = this.apply { command.id = id }
+  /** This can't be null when [build] is called. */
+  var context: Context? = null
+
+  /** This can be null. */
+  var message: String? = null
 
   fun build(): Intent {
     Assert.assertNotNull("Context can not be null!", context)
-    val intent = Intent(context, MyTileService::class.java)
-    if (command.id != CommandId.INVALID) intent.putExtra(KEY_COMMAND_ID, command.id)
-    if (command.message != null) intent.putExtra(KEY_MESSAGE, command.message)
-    return intent
+    return Command(commandId, message).toIntent(context!!)
   }
 
   companion object {
-    private const val KEY_MESSAGE = "msg"
-    private const val KEY_COMMAND_ID = "cmd_id"
-
-    // Builder.
-    fun getInstance(context: Context?): MyIntentBuilder = MyIntentBuilder(context)
-
-    // Intent helpers.
-    fun containsCommand(intent: Intent): Boolean = intent.extras.containsKey(KEY_COMMAND_ID)
-    fun containsMessage(intent: Intent): Boolean = intent.extras.containsKey(KEY_MESSAGE)
-
-    @CommandId
-    fun getCommand(intent: Intent): Int = intent.extras.getInt(KEY_COMMAND_ID)
-    fun getMessage(intent: Intent): String = intent.extras.getString(KEY_MESSAGE)
-
     // Helper methods.
-    fun getExplicitIntentToStartService(context: Context?) = getInstance(context).setCommand(START).build()
+    fun getExplicitIntentToStartService(ctx: Context) = buildIntent {
+      context = ctx
+      commandId = START
+    }
 
-    fun getExplicitIntentToStopService(context: Context?) = getInstance(context).setCommand(STOP).build()
+    fun getExplicitIntentToStopService(ctx: Context) = buildIntent {
+      context = ctx
+      commandId = STOP
+    }
   }
 
-} //end class MyIntentBuilder.
+}
+
+/** Simple DSL for builder. */
+fun buildIntent(block: MyIntentBuilder.() -> Unit): Intent = MyIntentBuilder().apply(block).build()
+
+// Intent helpers.
+class IntentHelper {
+  companion object {
+    fun containsCommand(intent: Intent): Boolean = intent.extras.containsKey(Keys.CommandId.name)
+    fun containsMessage(intent: Intent): Boolean = intent.extras.containsKey(Keys.Message.name)
+
+    @CommandId
+    fun getCommand(intent: Intent): Int = intent.extras.getInt(Keys.CommandId.name)
+    fun getMessage(intent: Intent): String = intent.extras.getString(Keys.Message.name)
+  }
+}

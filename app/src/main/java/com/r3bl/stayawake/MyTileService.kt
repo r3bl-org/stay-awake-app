@@ -129,23 +129,23 @@ class MyTileService : TileService() {
   }
 
   private fun getDebugIntentString(intent: Intent, startId: Int): String {
-    val containsCommand = MyIntentBuilder.containsCommand(intent)
+    val containsCommand = IntentHelper.containsCommand(intent)
     return String.format(
         "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
         if (myServiceIsStarted) "STARTED" else "NOT STARTED",
-        if (containsCommand) MyIntentBuilder.getCommand(intent) else "N/A",
+        if (containsCommand) IntentHelper.getCommand(intent) else "N/A",
         startId)
   }
 
   private fun routeIntentToCommand(intent: Intent?) {
     intent?.apply {
       // Process command.
-      if (MyIntentBuilder.containsCommand(this)) {
-        processCommand(MyIntentBuilder.getCommand(this))
+      if (IntentHelper.containsCommand(this)) {
+        processCommand(IntentHelper.getCommand(this))
       }
       // Process message.
-      if (MyIntentBuilder.containsMessage(this)) {
-        processMessage(MyIntentBuilder.getMessage(this))
+      if (IntentHelper.containsMessage(this)) {
+        processMessage(IntentHelper.getMessage(this))
       }
     }
   }
@@ -358,7 +358,6 @@ class MyTileService : TileService() {
   }
 
   companion object {
-    // Constants.
     const val TAG = "SA_MyService"
     val MAX_TIME_SEC = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES)
     const val DELAY_INITIAL = 0
