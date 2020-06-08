@@ -27,6 +27,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   init {
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_CONNECTED))
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
+    MyTileServiceSettings.loadSharedPreferences(myContext)
     d(MyTileService.TAG, "registerReceiver: PowerConnectionReceiver")
   }
 

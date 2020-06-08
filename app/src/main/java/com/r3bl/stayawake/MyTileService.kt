@@ -26,13 +26,11 @@ import android.os.Build
 import android.os.Handler
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
-import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.util.Log.d
 import androidx.annotation.MainThread
-import com.r3bl.stayawake.MyTileService.Companion.TAG
 import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -40,39 +38,6 @@ import java.io.Writer
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
-
-object MyTileServiceSettings {
-  var autoStartEnabled: Boolean = true
-  var timeoutNotChargingSec: Long = TimeUnit.SECONDS.convert(10, TimeUnit.MINUTES)
-
-  fun loadSharedPreferences(context: Context) = with(context) {
-    with(getDefaultSharedPreferences(this)) {
-      autoStartEnabled = getBoolean(getString(R.string.prefs_auto_start_enabled), autoStartEnabled)
-      timeoutNotChargingSec = getLong(getString(R.string.prefs_timeout_not_charging_sec), timeoutNotChargingSec)
-      d(TAG, "loadSharedPreferences: $debugString")
-    }
-  }
-
-  private fun saveSharedPreferences(context: Context) = with(context) {
-    with(getDefaultSharedPreferences(this)) {
-      with(edit()) {
-        putBoolean(getString(R.string.prefs_auto_start_enabled), autoStartEnabled)
-        putLong(getString(R.string.prefs_timeout_not_charging_sec), timeoutNotChargingSec)
-        commit()
-      }
-    }
-  }
-
-  fun saveSharedPreferencesAfterRunningLambda(context: Context, lambda: MyTileServiceSettings.() -> Unit) {
-    lambda(this)
-    saveSharedPreferences(context)
-    d(TAG, "saveSharedPreferences, $debugString")
-  }
-
-  private val debugString: String
-    get() = "autoStartEnabled = $autoStartEnabled, timeoutNotChargingSec = $timeoutNotChargingSec"
-
-}
 
 /**
  * This is a bound and started service. TileService is a bound service, and it automatically binds to the Settings Tile.
@@ -100,10 +65,10 @@ class MyTileService : TileService() {
     myHandler = Handler()
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
-    d(TAG, "onCreate: ")
+    loadSharedPreferences(this)
     myReceiver = PowerConnectionReceiver(this)
     if (isCharging(this)) commandStart()
-    loadSharedPreferences(this)
+    d(TAG, "onCreate: ")
   }
 
   override fun onDestroy() {
