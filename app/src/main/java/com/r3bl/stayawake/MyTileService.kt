@@ -31,9 +31,9 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.util.Log.d
-import android.widget.CheckBox
 import androidx.annotation.MainThread
 import com.r3bl.stayawake.MyTileService.Companion.TAG
+import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.io.Writer
@@ -49,7 +49,7 @@ object MyTileServiceSettings {
     with(getDefaultSharedPreferences(this)) {
       autoStartEnabled = getBoolean(getString(R.string.prefs_auto_start_enabled), autoStartEnabled)
       timeoutNotChargingSec = getLong(getString(R.string.prefs_timeout_not_charging_sec), timeoutNotChargingSec)
-      d(TAG, "loadSharedPreferences, autoStartEnabled = ${autoStartEnabled}")
+      d(TAG, "loadSharedPreferences: $debugString")
     }
   }
 
@@ -66,8 +66,12 @@ object MyTileServiceSettings {
   fun saveSharedPreferencesAfterRunningLambda(context: Context, lambda: MyTileServiceSettings.() -> Unit) {
     lambda(this)
     saveSharedPreferences(context)
-    d(TAG, "saveSharedPreferences, autoStartEnabled = $autoStartEnabled, timeoutNotChargingSec = $timeoutNotChargingSec")
+    d(TAG, "saveSharedPreferences, $debugString")
   }
+
+  private val debugString: String
+    get() = "autoStartEnabled = $autoStartEnabled, timeoutNotChargingSec = $timeoutNotChargingSec"
+
 }
 
 /**
@@ -99,6 +103,7 @@ class MyTileService : TileService() {
     d(TAG, "onCreate: ")
     myReceiver = PowerConnectionReceiver(this)
     if (isCharging(this)) commandStart()
+    loadSharedPreferences(this)
   }
 
   override fun onDestroy() {
