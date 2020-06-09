@@ -47,7 +47,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerConnected() {
-    if (MyTileServiceSettings.autoStartEnabled) {
+    if (MyTileServiceSettings.loadSharedPreferences(myContext).autoStartEnabled) {
       MyTileService.startService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
       // showToast(myContext, message)
@@ -61,7 +61,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerDisconnected() {
-    if (MyTileServiceSettings.autoStartEnabled) {
+    if (MyTileServiceSettings.loadSharedPreferences(myContext).autoStartEnabled) {
       MyTileService.stopService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
       // showToast(myContext, message)

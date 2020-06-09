@@ -285,8 +285,8 @@ class MyTileService : TileService() {
     }
     else {
       // Run down the countdown timer.
-      myTimeRunning_sec++
-      if (myTimeRunning_sec >= MyTileServiceSettings.timeoutNotChargingSec) {
+      myTimeRunning_sec += DELAY_UNIT.convert(DELAY_RECURRING, TimeUnit.SECONDS)
+      if (myTimeRunning_sec >= loadSharedPreferences(this).timeoutNotChargingSec) {
         // Timer has run out.
         if (isCharging(this)) {
           d(TAG, "recurringTask: timer ended but phone is charging")
@@ -333,7 +333,7 @@ class MyTileService : TileService() {
     else {
       tile.state = Tile.STATE_ACTIVE
       tile.icon = myIconEyeOpen
-      val timeRemaining = MyTileServiceSettings.timeoutNotChargingSec - myTimeRunning_sec
+      val timeRemaining = loadSharedPreferences(this).timeoutNotChargingSec - myTimeRunning_sec
       val formatTime = formatTime(timeRemaining)
       tile.label = getString(R.string.tile_active_text, formatTime)
     }
@@ -343,7 +343,7 @@ class MyTileService : TileService() {
     return if (time_sec <= 60) { // less than 1 min.
       String.format("%ds", time_sec)
     }
-    else if (time_sec > 60 && time_sec < 3600) { // less than 60 min.
+    else if (time_sec in 61..3599) { // less than 60 min.
       val minutes = TimeUnit.SECONDS.toMinutes(time_sec)
       String.format("%dm:%ds", minutes, time_sec - minutes * 60)
     }
@@ -360,8 +360,8 @@ class MyTileService : TileService() {
 
   companion object {
     const val TAG = "SA_MyService"
-    const val DELAY_INITIAL = 0
-    const val DELAY_RECURRING = 1
+    const val DELAY_INITIAL: Long = 0
+    const val DELAY_RECURRING: Long = 5
     val DELAY_UNIT = TimeUnit.SECONDS
 
     fun startService(context: Context) {
@@ -396,14 +396,11 @@ class MyTileService : TileService() {
 
     /**
      * @param forceIfNotCharging If you want to start the service regardless of whether the device is currently charging
-     * or not then pass true here, otherwise, the service will not start if the device isn't
-     * charging.
+     * or not then pass true here, otherwise, the service will not start if the device isn't charging.
      */
     fun coldStart(context: Context, forceIfNotCharging: Boolean) {
       // Check if charging, and start it.
-      if (forceIfNotCharging || isCharging(context)) {
-        startService(context)
-      }
+      if (forceIfNotCharging || isCharging(context)) startService(context)
     }
 
     /**

@@ -65,15 +65,17 @@ class MainActivity : AppCompatActivity() {
     //hideStatusBar();
     loadAndApplyFonts()
     formatMessages()
-    coldStart(this, false)
+    if (loadSharedPreferences(this).autoStartEnabled) coldStart(this, false)
     loadSharedPreferences(this)
     setupCheckbox()
     setupSpinner(typeNotoSansRegular)
   }
 
   private fun setupCheckbox() {
-    checkbox_prefs_auto_start.isChecked = MyTileServiceSettings.autoStartEnabled
-    d(TAG, "setupCheckbox: set checkbox state to: ${MyTileServiceSettings.autoStartEnabled}")
+    loadSharedPreferences(this).autoStartEnabled.let { autoStartEnabled ->
+      checkbox_prefs_auto_start.isChecked = autoStartEnabled
+      d(TAG, "setupCheckbox: set checkbox state to: $autoStartEnabled")
+    }
   }
 
   private fun loadAndApplyFonts() {
@@ -112,7 +114,7 @@ class MainActivity : AppCompatActivity() {
     adapter = myAdapter
 
     // Restore saved selection.
-    val savedTimeoutInSec: Long = MyTileServiceSettings.timeoutNotChargingSec
+    val savedTimeoutInSec: Long = loadSharedPreferences(this@MainActivity).timeoutNotChargingSec
     val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
     val position = myAdapter.getPosition(savedTimeoutInMin.toString())
     if (position != -1) {
@@ -155,7 +157,7 @@ class MainActivity : AppCompatActivity() {
 
   private fun formatMessages() {
     // Add actual minutes to string template.
-    val hours = TimeUnit.SECONDS.toMinutes(MyTileServiceSettings.timeoutNotChargingSec)
+    val hours = TimeUnit.SECONDS.toMinutes(loadSharedPreferences(this).timeoutNotChargingSec)
     text_introduction_content.text = getString(R.string.introduction_body, hours)
 
     // Linkify github link.
