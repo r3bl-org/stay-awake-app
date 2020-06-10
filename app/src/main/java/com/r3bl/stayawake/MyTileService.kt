@@ -40,8 +40,8 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
- * This is a bound and started service. TileService is a bound service, and it automatically binds to the Settings Tile.
- * Since this service also holds a WakeLock, this part of it happens in the started service, which also displays a
+ * This is a bound and started service. [TileService] is a bound service, and it automatically binds to the Settings
+ * Tile. Since this service also holds a WakeLock, this part of it happens in the started service, which also displays a
  * persistent notification, and takes care of starting itself.
  *
  * If the user has added this quick tile to their notification drawer, then [onCreate] will be called when the device
