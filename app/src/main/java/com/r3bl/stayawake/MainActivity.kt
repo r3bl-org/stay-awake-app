@@ -15,13 +15,13 @@
  */
 package com.r3bl.stayawake
 
-import android.util.Log.d
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.style.ForegroundColorSpan
 import android.text.util.Linkify
+import android.util.Log.d
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
@@ -31,11 +31,9 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.util.LinkifyCompat
 import com.r3bl.stayawake.MyTileService.Companion.TAG
-import com.r3bl.stayawake.MyTileService.Companion.coldStart
 import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
 import com.r3bl.stayawake.MyTileServiceSettings.saveSharedPreferencesAfterRunningLambda
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.spinner_timeout
 import kotlinx.android.synthetic.main.activity_main.view.*
 import java.util.concurrent.TimeUnit
 
@@ -65,10 +63,17 @@ class MainActivity : AppCompatActivity() {
     //hideStatusBar();
     loadAndApplyFonts()
     formatMessages()
-    if (loadSharedPreferences(this).autoStartEnabled) coldStart(this, false)
-    loadSharedPreferences(this)
+    handleAutoStartOfService()
     setupCheckbox()
     setupSpinner(typeNotoSansRegular)
+  }
+
+  private fun handleAutoStartOfService() {
+    if (loadSharedPreferences(this).autoStartEnabled && MyTileService.isCharging(this)) {
+      MyTileService.fireIntentWithStartService(this)
+      d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
+    }
+    else d(TAG, "MainActivity.handleAutoStartOfService: Do nothing, auto start disabled")
   }
 
   private fun setupCheckbox() {
@@ -131,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         val selectionInMin: String = parent?.getItemAtPosition(position).toString()
         val selectionInSec: Long = TimeUnit.SECONDS.convert(selectionInMin.toLong(), TimeUnit.MINUTES)
         saveSharedPreferencesAfterRunningLambda(this@MainActivity) {
-          timeoutNotChargingSec = selectionInSec.toLong()
+          timeoutNotChargingSec = selectionInSec
         }
         formatMessages()
         d(TAG, "onItemSelected: spinner selection is $selectionInMin")
@@ -187,7 +192,7 @@ class MainActivity : AppCompatActivity() {
     str.setSpan(ForegroundColorSpan(color), i, i + subtext.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
-  fun buttonStartAwakeClicked(ignore: View) = coldStart(this, true)
+  fun buttonClicked(ignore: View) = MyTileService.fireIntentWithStartService(this)
 
   fun checkboxClicked(view: View) = (view as CheckBox).let { checkbox ->
     saveSharedPreferencesAfterRunningLambda(this) { autoStartEnabled = checkbox.isChecked }

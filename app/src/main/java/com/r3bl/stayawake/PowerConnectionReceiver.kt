@@ -20,6 +20,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.util.Log.d
+import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
 
 /** Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg */
 class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceiver() {
@@ -27,7 +28,6 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   init {
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_CONNECTED))
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
-    MyTileServiceSettings.loadSharedPreferences(myContext)
     d(MyTileService.TAG, "registerReceiver: PowerConnectionReceiver")
   }
 
@@ -47,8 +47,8 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerConnected() {
-    if (MyTileServiceSettings.loadSharedPreferences(myContext).autoStartEnabled) {
-      MyTileService.startService(myContext)
+    if (loadSharedPreferences(myContext).autoStartEnabled) {
+      MyTileService.fireIntentWithStartService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
       // showToast(myContext, message)
       d(MyTileService.TAG, message)
@@ -61,8 +61,8 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerDisconnected() {
-    if (MyTileServiceSettings.loadSharedPreferences(myContext).autoStartEnabled) {
-      MyTileService.stopService(myContext)
+    if (loadSharedPreferences(myContext).autoStartEnabled) {
+      MyTileService.fireIntentWithStopService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
       // showToast(myContext, message)
       d(MyTileService.TAG, message)

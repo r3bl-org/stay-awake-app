@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
  * persistent notification, and takes care of starting itself.
  *
  * If the user has added this quick tile to their notification drawer, then [onCreate] will be called when the device
- * boots. This in turn attaches the [PowerConnection] which allows Awake to start automatically when the device
+ * boots. This in turn attaches the [PowerConnectionReceiver] which allows Awake to start automatically when the device
  * is charged. If they don't add the quick tile, then this does not happen.
  */
 class MyTileService : TileService() {
@@ -65,10 +65,17 @@ class MyTileService : TileService() {
     myHandler = Handler()
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
-    loadSharedPreferences(this)
     myReceiver = PowerConnectionReceiver(this)
-    if (isCharging(this)) commandStart()
+    handleAutoStartOfService()
     d(TAG, "onCreate: ")
+  }
+
+  private fun handleAutoStartOfService() {
+    if (loadSharedPreferences(this).autoStartEnabled && isCharging(this)) {
+      commandStart()
+      d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
+    }
+    else d(TAG, "MyTileService.handleAutoStartOfService: Do nothing, auto start disabled")
   }
 
   override fun onDestroy() {
@@ -125,7 +132,16 @@ class MyTileService : TileService() {
   // Started service code.
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     d(TAG, getDebugIntentString(intent, startId))
-    routeIntentToCommand(intent)
+    intent.apply {
+      // Process command.
+      if (IntentHelper.containsCommand(this)) {
+        processCommand(IntentHelper.getCommand(this))
+      }
+      // Process message.
+      if (IntentHelper.containsMessage(this)) {
+        processMessage(IntentHelper.getMessage(this))
+      }
+    }
     return Service.START_NOT_STICKY
   }
 
@@ -138,24 +154,10 @@ class MyTileService : TileService() {
         startId)
   }
 
-  private fun routeIntentToCommand(intent: Intent?) {
-    intent?.apply {
-      // Process command.
-      if (IntentHelper.containsCommand(this)) {
-        processCommand(IntentHelper.getCommand(this))
-      }
-      // Process message.
-      if (IntentHelper.containsMessage(this)) {
-        processMessage(IntentHelper.getMessage(this))
-      }
-    }
-  }
-
   private fun processMessage(message: String) {
     try {
       // Do nothing.
-      d(TAG,
-        String.format("doMessage: message from client: '%s'", message))
+      d(TAG, "doMessage: message from client: $message")
     }
     catch (e: Exception) {
       Log.e(TAG, "processMessage: exception", e)
@@ -175,7 +177,8 @@ class MyTileService : TileService() {
   }
 
   /**
-   * This method can be called directly, or by firing an explicit Intent with [CommandId.STOP].
+   * This method can be called directly (by this bound service), or from another Android component by firing an explicit
+   * [Intent] with [CommandId.STOP], using [fireIntentWithStopService].
    */
   private fun commandStop() {
     if (!myServiceIsStarted) return
@@ -196,12 +199,20 @@ class MyTileService : TileService() {
   }
 
   /**
-   * This can be called via an explicit intent to start this serivce, which calls [.onStartCommand] or it can be called directly, which is what happens in [.onClick] by this bound service.
+   * This method can be called directly, and it will move the service to started state (by firing an explicit [Intent] to
+   * [startService]. This happens when this bound service's [onCreate] method causes the service to be started.
    *
+   * It is confusing when this method gets called by [fireIntentWithStartService] from other Android components (that
+   * are not this bound service). This method is called by [PowerConnectionReceiver] and [MainActivity], and they aren't
+   * bound to this service, so they end up generating an [Intent] with [CommandId.STOP] which will put the service in a
+   * started state. But then this method itself will also put the already started service in a started state and even
+   * show a notification if needed. In this case, it is ok to start a service **twice**, since [myServiceIsStarted] is
+   * used to gate this method actually executing multiple times.
    *
-   *
-   * This is why the service needs to [.moveToStartedState] if it's not already in a started state. More
-   * details can be found in the method documentation itself.
+   * Unfortunately, this is a really inelegant way to handle this, and stems from the confusing state machine that
+   * are Android bound and started services. The alternative would be to have two separate code paths to start a
+   * service: 1) from this bound service itself, 2) from other Android components outside of this bound service.
+   * However, this would result in the same net effect, which is why this reentrant method does the job with less code.
    */
   private fun commandStart() {
     if (myServiceIsStarted) return
@@ -221,11 +232,7 @@ class MyTileService : TileService() {
     if (myExecutor == null) {
       myTimeRunning_sec = 0
       myExecutor = Executors.newSingleThreadScheduledExecutor().apply {
-        scheduleWithFixedDelay({ myHandler?.post { recurringTask() } },
-                               DELAY_INITIAL.toLong(),
-                               DELAY_RECURRING.toLong(),
-                               DELAY_UNIT)
-
+        scheduleWithFixedDelay({ myHandler?.post { recurringTask() } }, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT)
       }
       d(TAG, "commandStart: starting executor")
     }
@@ -364,7 +371,11 @@ class MyTileService : TileService() {
     const val DELAY_RECURRING: Long = 5
     val DELAY_UNIT = TimeUnit.SECONDS
 
-    fun startService(context: Context) {
+    /**
+     * Allows other Android components that are not this bound service, to actually put this service into a started
+     * state.
+     */
+    fun fireIntentWithStartService(context: Context) {
       try {
         context.startService(MyIntentBuilder.getExplicitIntentToStartService(context))
       }
@@ -375,7 +386,11 @@ class MyTileService : TileService() {
       }
     }
 
-    fun stopService(context: Context) {
+    /**
+     * Allows other Android components that are not this bound service, to actually put this service into a stopped
+     * state.
+     */
+    fun fireIntentWithStopService(context: Context) {
       try {
         context.startService(MyIntentBuilder.getExplicitIntentToStopService(context))
       }
@@ -395,18 +410,9 @@ class MyTileService : TileService() {
     }
 
     /**
-     * @param forceIfNotCharging If you want to start the service regardless of whether the device is currently charging
-     * or not then pass true here, otherwise, the service will not start if the device isn't charging.
-     */
-    fun coldStart(context: Context, forceIfNotCharging: Boolean) {
-      // Check if charging, and start it.
-      if (forceIfNotCharging || isCharging(context)) startService(context)
-    }
-
-    /**
      * More info: https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC
      */
-    private fun isCharging(context: Context): Boolean {
+    fun isCharging(context: Context): Boolean {
       val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
       val batteryStatus = context.applicationContext.registerReceiver(null, intentFilter)
       val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)

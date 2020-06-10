@@ -50,7 +50,7 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:text="@string/button_start_awake"
-        android:onClick="buttonStartAwakeClicked"/>
+        android:onClick="buttonClicked"/>
 
     <View style="@style/VerticalWhitespaceSeparator"></View>
 
