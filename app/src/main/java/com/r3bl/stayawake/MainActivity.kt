@@ -31,11 +31,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.text.util.LinkifyCompat
 import com.r3bl.stayawake.MyTileService.Companion.TAG
-import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
-import com.r3bl.stayawake.MyTileServiceSettings.saveSharedPreferencesAfterRunningLambda
+import com.r3bl.stayawake.MyTileServiceSettings.changeSettings
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_main.view.*
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.util.concurrent.TimeUnit
+
 
 /** More info: https://stackoverflow.com/a/25510848/2085356 */
 private class MySpinnerAdapter(context: Context, resource: Int, items: List<String>, private val font: Typeface) :
@@ -55,32 +58,54 @@ class MainActivity : AppCompatActivity() {
   private lateinit var typeNotoSansBold: Typeface
   private lateinit var typeTitilumWebLight: Typeface
   private lateinit var typeTitilumWebRegular: Typeface
+  private lateinit var mySettingsHolder: MyTileServiceSettings.Holder
+
+  /** Handle [SettingsChangedEvent] from [EventBus]. */
+  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
+    mySettingsHolder.value = this
+    d(TAG, "MainActivity.onSettingsChangedEvent: ${mySettingsHolder}")
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+
+    mySettingsHolder = MyTileServiceSettings.Holder(this)
+
     //showAppIconInActionBar();
     //hideStatusBar();
+
     loadAndApplyFonts()
     formatMessages()
+
     handleAutoStartOfService()
+
     setupCheckbox()
     setupSpinner(typeNotoSansRegular)
   }
 
+  override fun onStart() {
+    super.onStart()
+    MyTileServiceSettings.registerWithEventBus(this)
+  }
+
+  override fun onStop() {
+    MyTileServiceSettings.unregisterFromEventBus(this)
+    super.onStop()
+  }
+
   private fun handleAutoStartOfService() {
-    if (loadSharedPreferences(this).autoStartEnabled && MyTileService.isCharging(this)) {
+    if (mySettingsHolder.value.autoStartEnabled && MyTileService.isCharging(this)) {
       MyTileService.fireIntentWithStartService(this)
       d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
     }
     else d(TAG, "MainActivity.handleAutoStartOfService: Do nothing, auto start disabled")
   }
 
-  private fun setupCheckbox() {
-    loadSharedPreferences(this).autoStartEnabled.let { autoStartEnabled ->
-      checkbox_prefs_auto_start.isChecked = autoStartEnabled
-      d(TAG, "setupCheckbox: set checkbox state to: $autoStartEnabled")
-    }
+  private fun setupCheckbox() = mySettingsHolder.value.autoStartEnabled.let { autoStartEnabled ->
+    checkbox_prefs_auto_start.isChecked = autoStartEnabled
+    d(TAG, "setupCheckbox: set checkbox state to: $autoStartEnabled")
   }
 
   private fun loadAndApplyFonts() {
@@ -119,7 +144,7 @@ class MainActivity : AppCompatActivity() {
     adapter = myAdapter
 
     // Restore saved selection.
-    val savedTimeoutInSec: Long = loadSharedPreferences(this@MainActivity).timeoutNotChargingSec
+    val savedTimeoutInSec: Long = mySettingsHolder.value.timeoutNotChargingSec
     val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
     val position = myAdapter.getPosition(savedTimeoutInMin.toString())
     if (position != -1) {
@@ -135,7 +160,7 @@ class MainActivity : AppCompatActivity() {
       override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         val selectionInMin: String = parent?.getItemAtPosition(position).toString()
         val selectionInSec: Long = TimeUnit.SECONDS.convert(selectionInMin.toLong(), TimeUnit.MINUTES)
-        saveSharedPreferencesAfterRunningLambda(this@MainActivity) {
+        changeSettings(this@MainActivity) {
           timeoutNotChargingSec = selectionInSec
         }
         formatMessages()
@@ -162,7 +187,7 @@ class MainActivity : AppCompatActivity() {
 
   private fun formatMessages() {
     // Add actual minutes to string template.
-    val hours = TimeUnit.SECONDS.toMinutes(loadSharedPreferences(this).timeoutNotChargingSec)
+    val hours = TimeUnit.SECONDS.toMinutes(mySettingsHolder.value.timeoutNotChargingSec)
     text_introduction_content.text = getString(R.string.introduction_body, hours)
 
     // Linkify github link.
@@ -195,6 +220,6 @@ class MainActivity : AppCompatActivity() {
   fun buttonClicked(ignore: View) = MyTileService.fireIntentWithStartService(this)
 
   fun checkboxClicked(view: View) = (view as CheckBox).let { checkbox ->
-    saveSharedPreferencesAfterRunningLambda(this) { autoStartEnabled = checkbox.isChecked }
+    changeSettings(this) { autoStartEnabled = checkbox.isChecked }
   }
 }

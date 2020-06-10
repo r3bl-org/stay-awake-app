@@ -31,7 +31,10 @@ import android.service.quicksettings.TileService
 import android.util.Log
 import android.util.Log.d
 import androidx.annotation.MainThread
-import com.r3bl.stayawake.MyTileServiceSettings.loadSharedPreferences
+import androidx.annotation.WorkerThread
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.io.Writer
@@ -58,6 +61,14 @@ class MyTileService : TileService() {
   private var myIconEyeClosed: Icon? = null
   private var myHandler: Handler? = null
   private var myReceiver: PowerConnectionReceiver? = null
+  private lateinit var mySettingsHolder: MyTileServiceSettings.Holder
+
+  /** Handle [SettingsChangedEvent] from [EventBus]. */
+  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
+    mySettingsHolder.value = this
+    d(TAG, "MyTileService.onSettingsChangedEvent: ${mySettingsHolder}")
+  }
 
   // General service code.
   override fun onCreate() {
@@ -66,12 +77,14 @@ class MyTileService : TileService() {
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
     myReceiver = PowerConnectionReceiver(this)
+    mySettingsHolder = MyTileServiceSettings.Holder(this)
+    MyTileServiceSettings.registerWithEventBus(this)
     handleAutoStartOfService()
     d(TAG, "onCreate: ")
   }
 
   private fun handleAutoStartOfService() {
-    if (loadSharedPreferences(this).autoStartEnabled && isCharging(this)) {
+    if (mySettingsHolder.value.autoStartEnabled && isCharging(this)) {
       commandStart()
       d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
     }
@@ -90,6 +103,7 @@ class MyTileService : TileService() {
       unregister()
       d(TAG, "unregisterReceiver: PowerConnectionReceiver")
     }
+    MyTileServiceSettings.unregisterFromEventBus(this)
   }
 
   // Bound Service code & TileService code.
@@ -232,7 +246,7 @@ class MyTileService : TileService() {
     if (myExecutor == null) {
       myTimeRunning_sec = 0
       myExecutor = Executors.newSingleThreadScheduledExecutor().apply {
-        scheduleWithFixedDelay({ myHandler?.post { recurringTask() } }, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT)
+        scheduleWithFixedDelay({ recurringTask() }, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT)
       }
       d(TAG, "commandStart: starting executor")
     }
@@ -284,7 +298,7 @@ class MyTileService : TileService() {
     }
   }
 
-  @MainThread
+  @WorkerThread
   private fun recurringTask() {
     if (isCharging(this)) {
       // Reset the countdown timer.
@@ -293,7 +307,7 @@ class MyTileService : TileService() {
     else {
       // Run down the countdown timer.
       myTimeRunning_sec += DELAY_UNIT.convert(DELAY_RECURRING, TimeUnit.SECONDS)
-      if (myTimeRunning_sec >= loadSharedPreferences(this).timeoutNotChargingSec) {
+      if (myTimeRunning_sec >= mySettingsHolder.value.timeoutNotChargingSec) {
         // Timer has run out.
         if (isCharging(this)) {
           d(TAG, "recurringTask: timer ended but phone is charging")
@@ -308,9 +322,10 @@ class MyTileService : TileService() {
         // d(TAG, "recurringTask: normal");
       }
     }
-    updateTile()
+    myHandler?.post { updateTile() }
   }
 
+  @MainThread
   private fun updateTile() {
     val tile = qsTile
     val isRunning = myExecutor != null && !myExecutor!!.isShutdown
@@ -340,7 +355,7 @@ class MyTileService : TileService() {
     else {
       tile.state = Tile.STATE_ACTIVE
       tile.icon = myIconEyeOpen
-      val timeRemaining = loadSharedPreferences(this).timeoutNotChargingSec - myTimeRunning_sec
+      val timeRemaining = mySettingsHolder.value.timeoutNotChargingSec - myTimeRunning_sec
       val formatTime = formatTime(timeRemaining)
       tile.label = getString(R.string.tile_active_text, formatTime)
     }
