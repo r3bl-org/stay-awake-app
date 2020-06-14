@@ -100,7 +100,7 @@ class MainActivity : AppCompatActivity() {
       MyTileService.fireIntentWithStartService(this)
       d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
     }
-    else d(TAG, "MainActivity.handleAutoStartOfService: Do nothing, auto start disabled")
+    else d(TAG, "MainActivity.handleAutoStartOfService: Do not auto start")
   }
 
   private fun setupCheckbox() = mySettingsHolder.value.autoStartEnabled.let { autoStartEnabled ->

@@ -88,7 +88,7 @@ class MyTileService : TileService() {
       commandStart()
       d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
     }
-    else d(TAG, "MyTileService.handleAutoStartOfService: Do nothing, auto start disabled")
+    else d(TAG, "MyTileService.handleAutoStartOfService: Do not auto start")
   }
 
   override fun onDestroy() {
@@ -431,9 +431,7 @@ class MyTileService : TileService() {
       val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
       val batteryStatus = context.applicationContext.registerReceiver(null, intentFilter)
       val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-      return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-             status == BatteryManager.BATTERY_STATUS_FULL ||
-             status == BatteryManager.BATTERY_PLUGGED_AC ||
+      return status == BatteryManager.BATTERY_PLUGGED_AC ||
              status == BatteryManager.BATTERY_PLUGGED_WIRELESS ||
              status == BatteryManager.BATTERY_PLUGGED_USB
     }

@@ -69,7 +69,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
       d(TAG, message)
     }
     else {
-      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Do nothing, auto start disabled"
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Do not auto start"
       // showToast(myContext, message)
       d(TAG, message)
     }
@@ -83,7 +83,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
       d(TAG, message)
     }
     else {
-      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Do nothing, auto start disabled"
+      val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Do not auto start"
       // showToast(myContext, message)
       d(TAG, message)
     }
