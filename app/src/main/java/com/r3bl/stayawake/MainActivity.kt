@@ -79,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     loadAndApplyFonts()
     formatMessages()
 
-    handleAutoStartOfService()
+    //handleAutoStartOfService()
 
     setupCheckbox()
     setupSpinner(typeNotoSansRegular)
@@ -95,13 +95,13 @@ class MainActivity : AppCompatActivity() {
     super.onStop()
   }
 
-  private fun handleAutoStartOfService() {
-    if (mySettingsHolder.value.autoStartEnabled && MyTileService.isCharging(this)) {
-      MyTileService.fireIntentWithStartService(this)
-      d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
-    }
-    else d(TAG, "MainActivity.handleAutoStartOfService: Do not auto start")
-  }
+//  private fun handleAutoStartOfService() {
+//    if (mySettingsHolder.value.autoStartEnabled && MyTileService.isCharging(this)) {
+//      MyTileService.fireIntentWithStartService(this)
+//      d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
+//    }
+//    else d(TAG, "MainActivity.handleAutoStartOfService: Do not auto start")
+//  }
 
   private fun setupCheckbox() = mySettingsHolder.value.autoStartEnabled.let { autoStartEnabled ->
     checkbox_prefs_auto_start.isChecked = autoStartEnabled

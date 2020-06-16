@@ -65,12 +65,12 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
     if (mySettingsHolder.value.autoStartEnabled) {
       MyTileService.fireIntentWithStartService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
-      // showToast(myContext, message)
+      //showToast(myContext, message)
       d(TAG, message)
     }
     else {
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Do not auto start"
-      // showToast(myContext, message)
+      //showToast(myContext, message)
       d(TAG, message)
     }
   }
@@ -79,12 +79,12 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
     if (mySettingsHolder.value.autoStartEnabled) {
       MyTileService.fireIntentWithStopService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
-      // showToast(myContext, message)
+      //showToast(myContext, message)
       d(TAG, message)
     }
     else {
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Do not auto start"
-      // showToast(myContext, message)
+      //showToast(myContext, message)
       d(TAG, message)
     }
   }

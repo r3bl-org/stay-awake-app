@@ -79,17 +79,18 @@ class MyTileService : TileService() {
     myReceiver = PowerConnectionReceiver(this)
     mySettingsHolder = MyTileServiceSettings.Holder(this)
     MyTileServiceSettings.registerWithEventBus(this)
-    handleAutoStartOfService()
+    //handleAutoStartOfService()
     d(TAG, "onCreate: ")
   }
 
-  private fun handleAutoStartOfService() {
-    if (mySettingsHolder.value.autoStartEnabled && isCharging(this)) {
-      commandStart()
-      d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
-    }
-    else d(TAG, "MyTileService.handleAutoStartOfService: Do not auto start")
-  }
+//  private fun handleAutoStartOfService() {
+//    if (mySettingsHolder.value.autoStartEnabled && isCharging(this)) {
+//      showToast(applicationContext, "MyTileService: autoStartEnabled & isCharging -> auto start service")
+//      commandStart()
+//      d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
+//    }
+//    else d(TAG, "MyTileService.handleAutoStartOfService: Do not auto start")
+//  }
 
   override fun onDestroy() {
     super.onDestroy()
