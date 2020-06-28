@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
     //showAppIconInActionBar();
     //hideStatusBar();
 
-    updateTitlePaddingStatusBar()
+    updatePaddingTopWithStatusBarHeight()
 
     loadAndApplyFonts()
     formatMessages()
@@ -171,32 +171,19 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  // Updates app_title top padding, so that the title is displayed in a nice position
-  // relative to the status bar
-  private fun updateTitlePaddingStatusBar() {
-    var newHeight :Int = getStatusBarHeight()
-    // If we could not get the actual value, default to 72 pixels to minimize messing up the layout
-    if (newHeight == 0) {
-      newHeight = 72
+  /**
+   * Updates app_title top padding, so that the title is displayed in a nice position relative to the status bar.
+   * [More info](https://stackoverflow.com/a/3410200/2085356).
+   */
+  private fun updatePaddingTopWithStatusBarHeight() {
+    val statusBarHeightId = resources.getIdentifier("status_bar_height", "dimen", "android")
+    val statusBarHeightPx = when {
+      statusBarHeightId > 0 -> resources.getDimensionPixelSize(statusBarHeightId)
+      else                  -> resources.getDimensionPixelSize(R.dimen.status_bar_top_padding)
     }
-    app_title.setPadding(
-            app_title.paddingLeft,
-            newHeight,
-            app_title.paddingRight,
-            app_title.paddingBottom)
+    app_title.apply { setPadding(paddingLeft, statusBarHeightPx, paddingRight, paddingBottom) }
   }
 
-  // Returns status bar height in pixels
-  // Taken from https://stackoverflow.com/questions/3407256/height-of-status-bar-in-android
-  private fun getStatusBarHeight(): Int {
-    var result = 0
-    val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
-    if (resourceId > 0) {
-      result = resources.getDimensionPixelSize(resourceId)
-    }
-    return result
-  }
-  
   private fun hideStatusBar() {
     val decorView = window.decorView
     // Hide the status bar.
