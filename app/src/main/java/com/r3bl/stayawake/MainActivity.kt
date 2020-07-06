@@ -209,14 +209,14 @@ class MainActivity : AppCompatActivity() {
     LinkifyCompat.addLinks(text_opensource_body, Linkify.WEB_URLS)
 
     // Spanning color on textviews.
-    applySpan(text_install_body_1, "Step 1")
-    applySpan(text_install_body_2, "Step 2")
-    applySpan(text_install_body_3, "Step 3")
+    applySpan(text_install_body_1, R.string.install_body_1,"Step 1")
+    applySpan(text_install_body_2, R.string.install_body_2,"Step 2")
+    applySpan(text_install_body_3, R.string.install_body_3,"Step 3")
   }
 
-  private fun applySpan(textView: TextView, substring: String) {
+  private fun applySpan(textView: TextView, string_id: Int, substring: String) {
     setColorSpanOnTextView(textView,
-                           getString(R.string.install_body_1, substring),
+                           getString(string_id, substring),
                            substring,
                            getColor(R.color.colorTextDark))
   }
