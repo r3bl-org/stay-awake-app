@@ -29,8 +29,7 @@
         android:id="@+id/app_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        style="@style/AppTitle">
+        android:orientation="horizontal">
 
       <ImageView
           style="@style/AppTitleImage"
@@ -45,6 +44,12 @@
 
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/text_marketing_message"
+        android:text="@string/marketing_message"
+        style="@style/AppTitleMarketingText"
+        android:layout_gravity="center" />
+
     <Button
         android:id="@+id/button_start_awake"
         android:layout_width="match_parent"
@@ -52,6 +57,15 @@
         android:textAlignment="center"
         android:text="@string/button_start_awake"
         android:onClick="buttonClicked"/>
+
+    <View style="@style/VerticalWhitespaceSeparator"></View>
+
+    <TextView
+        android:id="@+id/text_settings_heading"
+        android:text="@string/settings_title"
+        style="@style/Heading1" />
+
+    <View style="@style/LineSeparator"></View>
 
     <View style="@style/VerticalWhitespaceSeparator"></View>
 
@@ -85,12 +99,6 @@
         android:onClick="checkboxClicked" />
 
     <View style="@style/VerticalWhitespaceSeparator"></View>
-
-    <TextView
-        android:id="@+id/text_marketing_message"
-        android:text="@string/marketing_message"
-        style="@style/AppTitleMarketingText"
-        android:layout_gravity="center" />
 
     <TextView
         android:id="@+id/text_introduction_heading"

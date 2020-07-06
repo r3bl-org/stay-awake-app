@@ -120,7 +120,8 @@ class MainActivity : AppCompatActivity() {
 
     listOf<TextView>(text_marketing_message).forEach { it.typeface = typeTitilumWebLight }
 
-    listOf<TextView>(text_introduction_heading, text_installation_heading, text_opensource_title).forEach {
+    listOf<TextView>(text_settings_heading, text_introduction_heading, text_installation_heading,
+                     text_opensource_title).forEach {
       it.typeface = typeTitilumWebRegular
     }
 

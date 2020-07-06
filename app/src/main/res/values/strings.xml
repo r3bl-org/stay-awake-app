@@ -47,6 +47,10 @@
         Keep your screen\non while charging
     </string>
 
+    <string name="settings_title">
+        Settings
+    </string>
+
   <string name="introduction_title">
         Introduction
     </string>
@@ -84,7 +88,7 @@
 
   <string name="github_body">
         The source code is available at -
-        https://github.com/r3bl-org/stay-awake-app.
+        https://github.com/r3bl-org/stay-awake-app
         Please file bugs at -
         https://github.com/r3bl-org/stay-awake-app/issues
     </string>
