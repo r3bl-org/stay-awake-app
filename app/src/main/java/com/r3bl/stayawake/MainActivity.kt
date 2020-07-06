@@ -216,16 +216,17 @@ class MainActivity : AppCompatActivity() {
     text_opensource_body.text = Html.fromHtml(getString(R.string.github_body), Html.FROM_HTML_MODE_COMPACT)
 
     // Spanning color on textviews.
-    applySpan(text_install_body_1, "Step 1")
-    applySpan(text_install_body_2, "Step 2")
-    applySpan(text_install_body_3, "Step 3")
+    applySpan(text_install_body_1, R.string.install_body_1, "Step 1")
+    applySpan(text_install_body_2, R.string.install_body_2, "Step 2")
+    applySpan(text_install_body_3, R.string.install_body_3, "Step 3")
   }
 
-  private fun applySpan(textView: TextView, substring: String) =
-      setColorSpanOnTextView(textView,
-                             getString(R.string.install_body_1, substring),
-                             substring,
-                             getColor(R.color.colorTextDark))
+  private fun applySpan(textView: TextView, stringResId: Int, substring: String) {
+    setColorSpanOnTextView(textView,
+                           getString(stringResId, substring),
+                           substring,
+                           getColor(R.color.colorTextDark))
+  }
 
   private fun setColorSpanOnTextView(view: TextView,
                                      fulltext: String,
