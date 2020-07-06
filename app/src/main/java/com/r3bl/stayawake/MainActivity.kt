@@ -120,9 +120,13 @@ class MainActivity : AppCompatActivity() {
 
     listOf<TextView>(text_marketing_message).forEach { it.typeface = typeTitilumWebLight }
 
-    listOf<TextView>(text_introduction_heading, text_installation_heading, text_opensource_title).forEach {
-      it.typeface = typeTitilumWebRegular
-    }
+    listOf<TextView>(text_settings_heading,
+                     text_introduction_heading,
+                     text_installation_heading,
+                     text_opensource_title)
+        .forEach {
+          it.typeface = typeTitilumWebRegular
+        }
 
     listOf<TextView>(text_spinner_timeout_description,
                      button_start_awake,
@@ -132,9 +136,10 @@ class MainActivity : AppCompatActivity() {
                      text_install_body_1,
                      text_install_body_2,
                      text_install_body_3,
-                     text_opensource_body).forEach {
-      it.typeface = typeNotoSansRegular
-    }
+                     text_opensource_body)
+        .forEach {
+          it.typeface = typeNotoSansRegular
+        }
   }
 
   private fun setupSpinner(font: Typeface) = with(spinner_timeout) {

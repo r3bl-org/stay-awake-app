@@ -36,14 +36,6 @@
   The following styles are for the AppTitle
   which is an icon and a text
    -->
-  <style name="AppTitle">
-    <!--
-    More info: https://github.com/r3bl-org/stay-awake-app/pull/10
-    Top padding is set automatically according to status bar height
-    <item name="android:paddingTop">25dp</item>
-    -->
-    <item name="android:paddingBottom">25dp</item>
-  </style>
 
   <style name="AppTitleText">
     <item name="android:layout_marginLeft">9dp</item>

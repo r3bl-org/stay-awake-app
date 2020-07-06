@@ -37,22 +37,18 @@
   <string name="msg_activate_awake_app_manually">Please start the Awake app, or activate it using its quick tile</string>
 
   <string name="spinner_timeout_description">Minutes that Awake can run on battery</string>
-  <string name="marketing_message">
-        Keep your screen\non while charging
-    </string>
+  <string name="marketing_message">Keep your screen\non while charging</string>
 
-  <string name="introduction_title">
-        Introduction
-    </string>
+  <string name="settings_title">Settings</string>
+
+  <string name="introduction_title">Introduction</string>
 
   <string name="introduction_body">
         Thank you for installing Awake app! Awake will keep your screen on indefinitely
         while charging or %1$d min if not charging.
     </string>
 
-  <string name="install_title">
-        Finish installation
-    </string>
+  <string name="install_title">Finish installation</string>
 
   <string name="install_body">
         Awake runs as a Quick Tile Setting and to
