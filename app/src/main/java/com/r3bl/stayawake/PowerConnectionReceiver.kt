@@ -25,28 +25,28 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 
-/** Changes to Android broadcast receiver behaviors: http://tinyurl.com/y9rm5wzg */
+/** [Changes to Android broadcast receiver behaviors](http://tinyurl.com/y9rm5wzg). */
 class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceiver() {
   /** Register system broadcast receiver (to handle future power connection and disconnection events). */
-  init {
+  fun registerBroadcastReceiver() {
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_CONNECTED))
     myContext.registerReceiver(this, IntentFilter(Intent.ACTION_POWER_DISCONNECTED))
     MyTileServiceSettings.registerWithEventBus(this)
     d(TAG, "registerReceiver: PowerConnectionReceiver")
   }
 
-  fun unregister() {
+  fun unregisterBroadcastReceiver() {
     MyTileServiceSettings.unregisterFromEventBus(this)
     myContext.unregisterReceiver(this)
   }
 
-  private val mySettingsHolder = MyTileServiceSettings.Holder(myContext)
+  private val mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(myContext)
 
   /** Handle [SettingsChangedEvent] from [EventBus]. */
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
-  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
-    mySettingsHolder.value = this
-    d(TAG, "PowerConnectionReceiver.onSettingsChangedEvent: ${mySettingsHolder}")
+  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) {
+    mySettings.value = event.settings
+    d(TAG, "PowerConnectionReceiver.onSettingsChangedEvent: ${mySettings}")
   }
 
   // Receiver functionality.
@@ -62,7 +62,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerConnected() {
-    if (mySettingsHolder.value.autoStartEnabled) {
+    if (mySettings.value.autoStartEnabled) {
       MyTileService.fireIntentWithStartService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
       //showToast(myContext, message)
@@ -76,7 +76,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerDisconnected() {
-    if (mySettingsHolder.value.autoStartEnabled) {
+    if (mySettings.value.autoStartEnabled) {
       MyTileService.fireIntentWithStopService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
       //showToast(myContext, message)

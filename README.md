@@ -1,22 +1,27 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [stay-awake-app](#stay-awake-app)
+- [Future of this app in question](#future-of-this-app-in-question)
+- [Change master to main (2020-06-27)](#change-master-to-main-2020-06-27)
+  - [License](#license)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # stay-awake-app
 
 This app is like Caffeine for Mac. It keeps your device awake as long as it's connected to power. It also uses quick
 settings tiles from Android N as its main interface. It also works on Android O (with the new background behaviors).
 
-## License
+# Future of this app is in question
 
-Copyright 2020 R3BL, LLC.
+Android is deprecating most of the APIs that this app relies on and more than likely this app will be deprecated soon.
+It heavily relies on background operation and the ability to acquire a wake lock, both of which are things that Android
+does not want apps to do anymore.
 
-Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file
-distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to you
-under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
-"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
-language governing permissions and limitations under the License.
+Here's [an article](https://medium.com/nala-money/the-bifurcation-of-android-6fa1cced074d) on how the Android OS is
+implemented by various device manufacturers & carriers affects what can be done by app developers using the APIs that
+are implemented differently on each device.
 
 # Change master to main (2020-06-27)
 
@@ -39,3 +44,18 @@ notion of slave branches.
 - https://www.hanselman.com/blog/EasilyRenameYourGitDefaultBranchFromMasterToMain.aspx
 
 [#blacklivesmatter](https://blacklivesmatter.com/)
+
+## License
+
+Copyright 2020 R3BL, LLC.
+
+Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements. See the NOTICE file
+distributed with this work for additional information regarding copyright ownership. The ASF licenses this file to you
+under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific
+language governing permissions and limitations under the License.

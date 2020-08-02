@@ -18,9 +18,10 @@ package com.r3bl.stayawake
 import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Html
 import android.text.Spannable
+import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
-import android.text.util.Linkify
 import android.util.Log.d
 import android.view.View
 import android.view.ViewGroup
@@ -28,8 +29,8 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.TextView
+import androidx.annotation.MainThread
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.text.util.LinkifyCompat
 import com.r3bl.stayawake.MyTileService.Companion.TAG
 import com.r3bl.stayawake.MyTileServiceSettings.changeSettings
 import kotlinx.android.synthetic.main.activity_main.*
@@ -38,7 +39,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.util.concurrent.TimeUnit
-
 
 /** More info: https://stackoverflow.com/a/25510848/2085356 */
 private class MySpinnerAdapter(context: Context, resource: Int, items: List<String>, private val font: Typeface) :
@@ -52,26 +52,18 @@ private class MySpinnerAdapter(context: Context, resource: Int, items: List<Stri
       (super.getDropDownView(position, convertView, parent) as TextView).apply { typeface = font }
 }
 
-
 class MainActivity : AppCompatActivity() {
   private lateinit var typeNotoSansRegular: Typeface
   private lateinit var typeNotoSansBold: Typeface
   private lateinit var typeTitilumWebLight: Typeface
   private lateinit var typeTitilumWebRegular: Typeface
-  private lateinit var mySettingsHolder: MyTileServiceSettings.Holder
-
-  /** Handle [SettingsChangedEvent] from [EventBus]. */
-  @Subscribe(threadMode = ThreadMode.BACKGROUND)
-  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
-    mySettingsHolder.value = this
-    d(TAG, "MainActivity.onSettingsChangedEvent: ${mySettingsHolder}")
-  }
+  private lateinit var mySettings: MyTileServiceSettings.ThreadSafeSettingsWrapper
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    mySettingsHolder = MyTileServiceSettings.Holder(this)
+    mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(this)
 
     //showAppIconInActionBar();
     //hideStatusBar();
@@ -97,15 +89,23 @@ class MainActivity : AppCompatActivity() {
     super.onStop()
   }
 
+  /** Handle [SettingsChangedEvent] from [EventBus]. */
+  @Subscribe(threadMode = ThreadMode.BACKGROUND)
+  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
+    mySettings.value = this
+    runOnUiThread { formatMessages() }
+    d(TAG, "MainActivity.onSettingsChangedEvent: ${mySettings}")
+  }
+
 //  private fun handleAutoStartOfService() {
-//    if (mySettingsHolder.value.autoStartEnabled && MyTileService.isCharging(this)) {
+//    if (mySettings.value.autoStartEnabled && MyTileService.isCharging(this)) {
 //      MyTileService.fireIntentWithStartService(this)
 //      d(TAG, "MainActivity.handleAutoStartOfService: Initiate auto start")
 //    }
 //    else d(TAG, "MainActivity.handleAutoStartOfService: Do not auto start")
 //  }
 
-  private fun setupCheckbox() = mySettingsHolder.value.autoStartEnabled.let { autoStartEnabled ->
+  private fun setupCheckbox() = mySettings.value.autoStartEnabled.let { autoStartEnabled ->
     checkbox_prefs_auto_start.isChecked = autoStartEnabled
     d(TAG, "setupCheckbox: set checkbox state to: $autoStartEnabled")
   }
@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
     adapter = myAdapter
 
     // Restore saved selection.
-    val savedTimeoutInSec: Long = mySettingsHolder.value.timeoutNotChargingSec
+    val savedTimeoutInSec: Long = mySettings.value.timeoutNotChargingSec
     val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
     val position = myAdapter.getPosition(savedTimeoutInMin.toString())
     if (position != -1) {
@@ -200,13 +200,20 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
+  /**
+   * More info on clickable HTML:
+   * - https://stackoverflow.com/a/38272292/2085356
+   * - https://stackoverflow.com/a/42811913/2085356
+   */
+  @MainThread
   private fun formatMessages() {
     // Add actual minutes to string template.
-    val hours = TimeUnit.SECONDS.toMinutes(mySettingsHolder.value.timeoutNotChargingSec)
+    val hours = TimeUnit.SECONDS.toMinutes(mySettings.value.timeoutNotChargingSec)
     text_introduction_content.text = getString(R.string.introduction_body, hours)
 
-    // Linkify github link.
-    LinkifyCompat.addLinks(text_opensource_body, Linkify.WEB_URLS)
+    // Load the Open Source footer as HTML that can be clicked.
+    text_opensource_body.movementMethod = LinkMovementMethod.getInstance()
+    text_opensource_body.text = Html.fromHtml(getString(R.string.github_body), Html.FROM_HTML_MODE_COMPACT)
 
     // Spanning color on textviews.
     applySpan(text_install_body_1, "Step 1")
@@ -214,12 +221,11 @@ class MainActivity : AppCompatActivity() {
     applySpan(text_install_body_3, "Step 3")
   }
 
-  private fun applySpan(textView: TextView, substring: String) {
-    setColorSpanOnTextView(textView,
-                           getString(R.string.install_body_1, substring),
-                           substring,
-                           getColor(R.color.colorTextDark))
-  }
+  private fun applySpan(textView: TextView, substring: String) =
+      setColorSpanOnTextView(textView,
+                             getString(R.string.install_body_1, substring),
+                             substring,
+                             getColor(R.color.colorTextDark))
 
   private fun setColorSpanOnTextView(view: TextView,
                                      fulltext: String,
@@ -227,14 +233,18 @@ class MainActivity : AppCompatActivity() {
                                      color: Int
   ) {
     view.setText(fulltext, TextView.BufferType.SPANNABLE)
-    val str = view.text as Spannable
-    val i = fulltext.indexOf(subtext)
-    str.setSpan(ForegroundColorSpan(color), i, i + subtext.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    val spannableText: Spannable = view.text as Spannable
+    val subtextStartIndex: Int = fulltext.indexOf(subtext)
+    spannableText.setSpan(ForegroundColorSpan(color),
+                          subtextStartIndex,
+                          subtextStartIndex + subtext.length,
+                          Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
   }
 
   fun buttonClicked(ignore: View) = MyTileService.fireIntentWithStartService(this)
 
-  fun checkboxClicked(view: View) = (view as CheckBox).let { checkbox ->
-    changeSettings(this) { autoStartEnabled = checkbox.isChecked }
-  }
+  fun checkboxClicked(view: View) =
+      changeSettings(this) {
+        autoStartEnabled = (view as CheckBox).isChecked
+      }
 }

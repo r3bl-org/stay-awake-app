@@ -37,12 +37,6 @@
   <string name="msg_activate_awake_app_manually">Please start the Awake app, or activate it using its quick tile</string>
 
   <string name="spinner_timeout_description">Minutes that Awake can run on battery</string>
-  <string-array name="spinner_timeout_choices">
-    <item>5</item>
-    <item>10</item>
-    <item>30</item>
-  </string-array>
-
   <string name="marketing_message">
         Keep your screen\non while charging
     </string>
@@ -82,11 +76,22 @@
         Open Source
     </string>
 
+  <!--
+  More info on clickable HTML:
+    - https://stackoverflow.com/a/38272292/2085356
+    - https://stackoverflow.com/a/42811913/2085356
+  -->
   <string name="github_body">
-        The source code is available at -
-        https://github.com/r3bl-org/stay-awake-app.
-        Please file bugs at -
-        https://github.com/r3bl-org/stay-awake-app/issues
-    </string>
+    <![CDATA[
+        The source code is available on <a href="https://github.com/r3bl-org/stay-awake-app">GitHub</a>.
+        Please file bugs <a href="https://github.com/r3bl-org/stay-awake-app/issues">here</a>.
+    ]]>
+  </string>
+
+  <string-array name="spinner_timeout_choices">
+    <item>5</item>
+    <item>10</item>
+    <item>30</item>
+  </string-array>
 
 </resources>

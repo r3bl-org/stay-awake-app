@@ -61,13 +61,13 @@ class MyTileService : TileService() {
   private var myIconEyeClosed: Icon? = null
   private var myHandler: Handler? = null
   private var myReceiver: PowerConnectionReceiver? = null
-  private lateinit var mySettingsHolder: MyTileServiceSettings.Holder
+  private lateinit var mySettings: MyTileServiceSettings.ThreadSafeSettingsWrapper
 
   /** Handle [SettingsChangedEvent] from [EventBus]. */
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
-  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
-    mySettingsHolder.value = this
-    d(TAG, "MyTileService.onSettingsChangedEvent: ${mySettingsHolder}")
+  fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) {
+    mySettings.value = event.settings
+    d(TAG, "MyTileService.onSettingsChangedEvent: ${mySettings}")
   }
 
   // General service code.
@@ -76,15 +76,15 @@ class MyTileService : TileService() {
     myHandler = Handler()
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
-    myReceiver = PowerConnectionReceiver(this)
-    mySettingsHolder = MyTileServiceSettings.Holder(this)
+    myReceiver = PowerConnectionReceiver(this).apply { registerBroadcastReceiver() }
+    mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(this)
     MyTileServiceSettings.registerWithEventBus(this)
     //handleAutoStartOfService()
     d(TAG, "onCreate: ")
   }
 
 //  private fun handleAutoStartOfService() {
-//    if (mySettingsHolder.value.autoStartEnabled && isCharging(this)) {
+//    if (mySettings.value.autoStartEnabled && isCharging(this)) {
 //      showToast(applicationContext, "MyTileService: autoStartEnabled & isCharging -> auto start service")
 //      commandStart()
 //      d(TAG, "MyTileService.handleAutoStartOfService: Initiate auto start")
@@ -101,7 +101,7 @@ class MyTileService : TileService() {
     }
     updateTile()
     myReceiver?.apply {
-      unregister()
+      unregisterBroadcastReceiver()
       d(TAG, "unregisterReceiver: PowerConnectionReceiver")
     }
     MyTileServiceSettings.unregisterFromEventBus(this)
@@ -147,25 +147,21 @@ class MyTileService : TileService() {
   // Started service code.
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     d(TAG, getDebugIntentString(intent, startId))
-    intent.apply {
-      // Process command.
-      if (IntentHelper.containsCommand(this)) {
-        processCommand(IntentHelper.getCommand(this))
-      }
-      // Process message.
-      if (IntentHelper.containsMessage(this)) {
-        processMessage(IntentHelper.getMessage(this))
-      }
+    when {
+      IntentHelper.containsCommand(intent) -> processCommand(IntentHelper.getCommand(intent))
+      IntentHelper.containsMessage(intent) -> processMessage(IntentHelper.getMessage(intent))
     }
     return Service.START_NOT_STICKY
   }
 
   private fun getDebugIntentString(intent: Intent, startId: Int): String {
     val containsCommand = IntentHelper.containsCommand(intent)
+    val containsMessage = IntentHelper.containsMessage(intent)
     return String.format(
-        "onStartCommand: Service in [%s] state. commandId: [%d]. startId: [%d]",
+        "onStartCommand: Service in [%s] state, commandId: [%d], message: [%s], startId: [%d]",
         if (myServiceIsStarted) "STARTED" else "NOT STARTED",
         if (containsCommand) IntentHelper.getCommand(intent) else "N/A",
+        if (containsMessage) IntentHelper.getMessage(intent) else "N/A",
         startId)
   }
 
@@ -247,7 +243,7 @@ class MyTileService : TileService() {
     if (myExecutor == null) {
       myTimeRunning_sec = 0
       myExecutor = Executors.newSingleThreadScheduledExecutor().apply {
-        scheduleWithFixedDelay({ recurringTask() }, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT)
+        scheduleWithFixedDelay(::recurringTask, DELAY_INITIAL, DELAY_RECURRING, DELAY_UNIT)
       }
       d(TAG, "commandStart: starting executor")
     }
@@ -258,8 +254,8 @@ class MyTileService : TileService() {
 
   private fun moveToForegroundAndShowNotification() {
     when {
-      isPreAndroidO -> HandleNotifications.PreO.createNotification(this)
-      else          -> HandleNotifications.O.createNotification(this)
+      isPreAndroidOreo -> HandleNotifications.PreO.createNotification(this)
+      else             -> HandleNotifications.O.createNotification(this)
     }
   }
 
@@ -273,7 +269,7 @@ class MyTileService : TileService() {
    */
   @TargetApi(Build.VERSION_CODES.O)
   private fun moveToStartedState() {
-    if (isPreAndroidO) {
+    if (isPreAndroidOreo) {
       d(TAG, "moveToStartedState: Running on Android N or lower - startService(intent)")
       startService(MyIntentBuilder.getExplicitIntentToStartService(this))
     }
@@ -308,7 +304,7 @@ class MyTileService : TileService() {
     else {
       // Run down the countdown timer.
       myTimeRunning_sec += DELAY_UNIT.convert(DELAY_RECURRING, TimeUnit.SECONDS)
-      if (myTimeRunning_sec >= mySettingsHolder.value.timeoutNotChargingSec) {
+      if (myTimeRunning_sec >= mySettings.value.timeoutNotChargingSec) {
         // Timer has run out.
         if (isCharging(this)) {
           d(TAG, "recurringTask: timer ended but phone is charging")
@@ -341,45 +337,48 @@ class MyTileService : TileService() {
     }
   }
 
-  private fun setTitleToIsNotRunning(tile: Tile) {
-    tile.state = Tile.STATE_INACTIVE
-    tile.icon = myIconEyeClosed
-    tile.label = getString(R.string.tile_inactive_text)
-  }
+  private fun setTitleToIsNotRunning(tile: Tile) =
+      with(tile) {
+        state = Tile.STATE_INACTIVE
+        icon = myIconEyeClosed
+        label = getString(R.string.tile_inactive_text)
+      }
 
-  private fun setTileToIsRunning(tile: Tile) {
-    if (isCharging(this)) {
-      tile.state = Tile.STATE_ACTIVE
-      tile.icon = myIconEyeOpen
-      tile.label = getString(R.string.tile_active_charging_text)
-    }
-    else {
-      tile.state = Tile.STATE_ACTIVE
-      tile.icon = myIconEyeOpen
-      val timeRemaining = mySettingsHolder.value.timeoutNotChargingSec - myTimeRunning_sec
-      val formatTime = formatTime(timeRemaining)
-      tile.label = getString(R.string.tile_active_text, formatTime)
-    }
-  }
+  private fun setTileToIsRunning(tile: Tile) =
+      when {
+        isCharging(this) -> {
+          with(tile) {
+            state = Tile.STATE_ACTIVE
+            icon = myIconEyeOpen
+            label = getString(R.string.tile_active_charging_text)
+          }
+        }
+        else             -> {
+          with(tile) {
+            state = Tile.STATE_ACTIVE
+            icon = myIconEyeOpen
+            val timeRemaining = mySettings.value.timeoutNotChargingSec - myTimeRunning_sec
+            val formatTime = formatTime(timeRemaining)
+            label = getString(R.string.tile_active_text, formatTime)
+          }
+        }
+      }
 
-  private fun formatTime(time_sec: Long): String {
-    return if (time_sec <= 60) { // less than 1 min.
-      String.format("%ds", time_sec)
-    }
-    else if (time_sec in 61..3599) { // less than 60 min.
-      val minutes = TimeUnit.SECONDS.toMinutes(time_sec)
-      String.format("%dm:%ds", minutes, time_sec - minutes * 60)
-    }
-    else { // more than 60 min.
-      val hours = TimeUnit.SECONDS.toHours(time_sec)
-      val minutes = TimeUnit.SECONDS.toMinutes(time_sec)
-      String.format(
-          "%dh:%dm:%ds",
-          hours,
-          minutes - hours * 60,
-          time_sec - minutes * 60)
-    }
-  }
+  private fun formatTime(time_sec: Long): String =
+      when {
+        time_sec <= 60       -> { // less than 1 min.
+          String.format("%ds", time_sec)
+        }
+        time_sec in 61..3599 -> { // less than 60 min.
+          val minutes = TimeUnit.SECONDS.toMinutes(time_sec)
+          String.format("%dm:%ds", minutes, time_sec - minutes * 60)
+        }
+        else                 -> { // more than 60 min.
+          val hours = TimeUnit.SECONDS.toHours(time_sec)
+          val minutes = TimeUnit.SECONDS.toMinutes(time_sec)
+          String.format("%dh:%dm:%ds", hours, minutes - hours * 60, time_sec - minutes * 60)
+        }
+      }
 
   companion object {
     const val TAG = "SA_MyService"
@@ -397,7 +396,7 @@ class MyTileService : TileService() {
       }
       catch (e: IllegalStateException) {
         // More info: https://developer.android.com/about/versions/oreo/background
-        dumpException(e, "Service can't be started, because app is current in background")
+        logErrorWithStackTrace(e, "Service can't be started, because app is current in background")
         showToast(context, context.getString(R.string.msg_activate_awake_app_manually))
       }
     }
@@ -412,11 +411,11 @@ class MyTileService : TileService() {
       }
       catch (e: IllegalStateException) {
         // More info: https://developer.android.com/about/versions/oreo/background
-        dumpException(e, "Service can't be stopped, because app is current in background")
+        logErrorWithStackTrace(e, "Service can't be stopped, because app is current in background")
       }
     }
 
-    private fun dumpException(exception: IllegalStateException, message: String) {
+    private fun logErrorWithStackTrace(exception: IllegalStateException, message: String) {
       Log.e(TAG, message)
       val buffer: Writer = StringWriter()
       val pw = PrintWriter(buffer)
@@ -426,7 +425,7 @@ class MyTileService : TileService() {
     }
 
     /**
-     * More info: https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC
+     * [More info](https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC)
      */
     fun isCharging(context: Context): Boolean {
       val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
@@ -437,7 +436,7 @@ class MyTileService : TileService() {
              status == BatteryManager.BATTERY_PLUGGED_USB
     }
 
-    val isPreAndroidO: Boolean
+    val isPreAndroidOreo: Boolean
       get() = Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1
   }
 }

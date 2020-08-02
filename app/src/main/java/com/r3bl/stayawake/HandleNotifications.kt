@@ -30,11 +30,11 @@ object HandleNotifications {
   const val SMALL_ICON = R.drawable.ic_stat_visibility
   const val STOP_ACTION_ICON = R.drawable.ic_stat_flare
 
-  /** PendingIntent to stop the service. */
-  private fun getPendingIntentToStopService(context: Service) = PendingIntent.getService(
-      context, randomNumber, getExplicitIntentToStopService(context), 0)
+  /** [PendingIntent] to stop the service. */
+  private fun getPendingIntentToStopService(context: Service) =
+      PendingIntent.getService(context, randomNumber, getExplicitIntentToStopService(context), 0)
 
-  /** Get pending intent to launch the activity. */
+  /** Get [PendingIntent] to launch the activity. */
   private fun getPendingIntentToLaunchActivity(context: Service): PendingIntent {
     val intentToLaunchMainActivity = Intent(context, MainActivity::class.java)
     return PendingIntent.getActivity(context, randomNumber, intentToLaunchMainActivity, 0)
@@ -56,7 +56,6 @@ object HandleNotifications {
           getStopActionText(context),
           getPendingIntentToStopService(context))
           .build()
-
       // Create a notification.
       // More information on ignored Channel ID: https://stackoverflow.com/a/45580202/2085356
       val notification = NotificationCompat.Builder(context, "")
@@ -87,7 +86,6 @@ object HandleNotifications {
           getStopActionText(context),
           getPendingIntentToStopService(context))
           .build()
-
       // Create a notification.
       return NotificationCompat.Builder(context, channelId)
           .setContentTitle(getTitle(context))
@@ -113,4 +111,4 @@ object HandleNotifications {
   private val randomNumber: Int
     get() = Random().nextInt(100000)
 
-} // end class HandleNotifications.
+}

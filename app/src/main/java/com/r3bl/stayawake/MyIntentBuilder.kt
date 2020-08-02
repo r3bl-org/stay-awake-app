@@ -18,17 +18,18 @@ package com.r3bl.stayawake
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.IntDef
+import com.r3bl.stayawake.CommandId.Companion.INVALID
 import com.r3bl.stayawake.CommandId.Companion.START
 import com.r3bl.stayawake.CommandId.Companion.STOP
 import org.junit.Assert
-import java.lang.IllegalStateException
 
 /**
- * Command enumeration using [IntDef]. More info:
+ * Command enumeration using [IntDef].
+ * More info:
  * - http://blog.shamanland.com/2016/02/int-string-enum.html
  * - https://stackoverflow.com/a/42486280/2085356
  */
-@IntDef(CommandId.INVALID, STOP, START)
+@IntDef(INVALID, STOP, START)
 @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
 annotation class CommandId {
   companion object {
@@ -43,16 +44,15 @@ private enum class Keys { Message, CommandId }
 private data class Command(@CommandId val id: Int, val message: String?) {
   fun toIntent(context: Context): Intent {
     val intent = Intent(context, MyTileService::class.java)
-    if (id != CommandId.INVALID) intent.putExtra(Keys.CommandId.name, id)
+    if (id != INVALID) intent.putExtra(Keys.CommandId.name, id)
     if (message != null) intent.putExtra(Keys.Message.name, message)
     return intent
   }
 }
 
 class MyIntentBuilder {
-  /** Don't use [CommandId.INVALID] as a param. If you do then this method does nothing. */
   @CommandId
-  var commandId: Int = CommandId.INVALID
+  var commandId: Int = INVALID
 
   /** This can't be null when [build] is called. */
   var context: Context? = null
