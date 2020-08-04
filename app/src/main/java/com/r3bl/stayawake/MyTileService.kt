@@ -319,7 +319,10 @@ class MyTileService : TileService() {
         // d(TAG, "recurringTask: normal");
       }
     }
-    myHandler?.post { updateTile() }
+    myHandler?.post {
+      //if (!isCharging(this)) showToast(this, "🔌🛑🚨️Phone is no longer charging!🔌🛑🚨")
+      updateTile()
+    }
   }
 
   @MainThread
@@ -425,16 +428,34 @@ class MyTileService : TileService() {
     }
 
     /**
-     * [More info](https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC)
+     * 1. [Docs](https://developer.android.com/reference/android/os/BatteryManager#BATTERY_PLUGGED_AC)
+     * 2. [SO](https://stackoverflow.com/a/11973742/2085356)
      */
     fun isCharging(context: Context): Boolean {
-      val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-      val batteryStatus = context.applicationContext.registerReceiver(null, intentFilter)
-      val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-      return status == BatteryManager.BATTERY_PLUGGED_AC ||
-             status == BatteryManager.BATTERY_PLUGGED_WIRELESS ||
-             status == BatteryManager.BATTERY_PLUGGED_USB
+      val intentFilter: IntentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+      val batteryIntent: Intent? = context.applicationContext.registerReceiver(null, intentFilter)
+
+      batteryIntent ?: return false
+
+      val batteryStatus: Int = batteryIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+      val batteryCharging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING
+
+      val chargerPlugged: Int = batteryIntent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+      val usbChargerPlugged: Boolean = chargerPlugged == BatteryManager.BATTERY_PLUGGED_USB
+      val acChargerPlugged: Boolean = chargerPlugged == BatteryManager.BATTERY_PLUGGED_AC
+      val wirelessChargerPlugged: Boolean = chargerPlugged == BatteryManager.BATTERY_PLUGGED_WIRELESS
+
+      return batteryCharging
+             || isChargingFromBatteryManager(context) // This is probably redundant w/ batteryCharging.
+             || usbChargerPlugged || acChargerPlugged || wirelessChargerPlugged
     }
+
+    /**
+     * 1. [Docs](https://developer.android.com/reference/android/os/BatteryManager.html#isCharging())
+     * 2. [SO](https://stackoverflow.com/a/47020822/2085356)
+     */
+    fun isChargingFromBatteryManager(context: Context): Boolean =
+        with(context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager) { isCharging }
 
     val isPreAndroidOreo: Boolean
       get() = Build.VERSION.SDK_INT <= Build.VERSION_CODES.N_MR1
