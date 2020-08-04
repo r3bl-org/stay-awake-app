@@ -25,8 +25,8 @@ android {
     minSdkVersion 25
     targetSdkVersion 28
     // Update versionCode & versionName before adding a release to the Google Play Store.
-    versionCode 19
-    versionName "2.7"
+    versionCode 20
+    versionName "2.8"
   }
   buildTypes {
     release {
