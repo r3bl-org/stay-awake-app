@@ -24,8 +24,9 @@ android {
     applicationId "com.r3bl.stayawake"
     minSdkVersion 25
     targetSdkVersion 28
-    versionCode 18
-    versionName "2.6"
+    // Update versionCode & versionName before adding a release to the Google Play Store.
+    versionCode 19
+    versionName "2.7"
   }
   buildTypes {
     release {
