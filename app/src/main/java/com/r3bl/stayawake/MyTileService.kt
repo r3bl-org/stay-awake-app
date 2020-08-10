@@ -61,13 +61,13 @@ class MyTileService : TileService() {
   private var myIconEyeClosed: Icon? = null
   private var myHandler: Handler? = null
   private var myReceiver: PowerConnectionReceiver? = null
-  private lateinit var mySettings: MyTileServiceSettings.ThreadSafeSettingsWrapper
+  private lateinit var mySettingsHolder: ThreadSafeSettingsHolder
 
   /** Handle [SettingsChangedEvent] from [EventBus]. */
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) {
-    mySettings.value = event.settings
-    d(TAG, "MyTileService.onSettingsChangedEvent: ${mySettings}")
+    mySettingsHolder.value = event.settings
+    d(TAG, "MyTileService.onSettingsChangedEvent: ${mySettingsHolder}")
   }
 
   // General service code.
@@ -77,7 +77,7 @@ class MyTileService : TileService() {
     myIconEyeOpen = Icon.createWithResource(this, R.drawable.ic_stat_visibility)
     myIconEyeClosed = Icon.createWithResource(this, R.drawable.ic_stat_visibility_off)
     myReceiver = PowerConnectionReceiver(this).apply { registerBroadcastReceiver() }
-    mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(this)
+    mySettingsHolder = ThreadSafeSettingsHolder(this)
     MyTileServiceSettings.registerWithEventBus(this)
     //handleAutoStartOfService()
     d(TAG, "onCreate: ")
@@ -304,7 +304,7 @@ class MyTileService : TileService() {
     else {
       // Run down the countdown timer.
       myTimeRunning_sec += DELAY_UNIT.convert(DELAY_RECURRING, TimeUnit.SECONDS)
-      if (myTimeRunning_sec >= mySettings.value.timeoutNotChargingSec) {
+      if (myTimeRunning_sec >= mySettingsHolder.value.timeoutNotChargingSec) {
         // Timer has run out.
         if (isCharging(this)) {
           d(TAG, "recurringTask: timer ended but phone is charging")
@@ -360,7 +360,7 @@ class MyTileService : TileService() {
           with(tile) {
             state = Tile.STATE_ACTIVE
             icon = myIconEyeOpen
-            val timeRemaining = mySettings.value.timeoutNotChargingSec - myTimeRunning_sec
+            val timeRemaining = mySettingsHolder.value.timeoutNotChargingSec - myTimeRunning_sec
             val formatTime = formatTime(timeRemaining)
             label = getString(R.string.tile_active_text, formatTime)
           }

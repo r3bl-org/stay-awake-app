@@ -34,14 +34,13 @@ import androidx.appcompat.app.AppCompatActivity
 import com.r3bl.stayawake.MyTileService.Companion.TAG
 import com.r3bl.stayawake.MyTileServiceSettings.changeSettings
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.view.*
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import java.util.concurrent.TimeUnit
 
 /** More info: https://stackoverflow.com/a/25510848/2085356 */
-private class MySpinnerAdapter(context: Context, resource: Int, items: List<String>, private val font: Typeface) :
+class MySpinnerAdapter(context: Context, resource: Int, items: List<String>, private val font: Typeface) :
   ArrayAdapter<String>(context, resource, items) {
   // Affects default (closed) state of the spinner.
   override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
@@ -57,13 +56,14 @@ class MainActivity : AppCompatActivity() {
   private lateinit var typeNotoSansBold: Typeface
   private lateinit var typeTitilumWebLight: Typeface
   private lateinit var typeTitilumWebRegular: Typeface
-  private lateinit var mySettings: MyTileServiceSettings.ThreadSafeSettingsWrapper
+  private lateinit var mySettingsHolder: ThreadSafeSettingsHolder
+  private lateinit var myAdapter: MySpinnerAdapter
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(this)
+    mySettingsHolder = ThreadSafeSettingsHolder(this)
 
     //showAppIconInActionBar();
     //hideStatusBar();
@@ -75,8 +75,9 @@ class MainActivity : AppCompatActivity() {
 
     //handleAutoStartOfService()
 
-    setupCheckbox()
     setupSpinner(typeNotoSansRegular)
+    applyMySettingsHolderValueToCheckbox()
+    applyMySettingsHolderValueToSpinner()
   }
 
   override fun onStart() {
@@ -92,9 +93,13 @@ class MainActivity : AppCompatActivity() {
   /** Handle [SettingsChangedEvent] from [EventBus]. */
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) = event.settings.apply {
-    mySettings.value = this
-    runOnUiThread { formatMessages() }
-    d(TAG, "MainActivity.onSettingsChangedEvent: ${mySettings}")
+    mySettingsHolder.value = this
+    runOnUiThread {
+      formatMessages()
+      applyMySettingsHolderValueToCheckbox()
+      applyMySettingsHolderValueToSpinner()
+    }
+    d(TAG, "MainActivity.onSettingsChangedEvent: ${mySettingsHolder}")
   }
 
 //  private fun handleAutoStartOfService() {
@@ -105,9 +110,30 @@ class MainActivity : AppCompatActivity() {
 //    else d(TAG, "MainActivity.handleAutoStartOfService: Do not auto start")
 //  }
 
-  private fun setupCheckbox() = mySettings.value.autoStartEnabled.let { autoStartEnabled ->
+  private fun applyMySettingsHolderValueToCheckbox() {
+    // Apply mySettings to checkbox_prefs_auto_start.
+    val autoStartEnabled: Boolean = mySettingsHolder.value.autoStartEnabled
     checkbox_prefs_auto_start.isChecked = autoStartEnabled
-    d(TAG, "setupCheckbox: set checkbox state to: $autoStartEnabled")
+    d(TAG, "applyMySettingsToCheckbox: set checkbox state to: $autoStartEnabled")
+  }
+
+  private fun applyMySettingsHolderValueToSpinner() {
+    val spinnerPositionForMySettingsValue: Int = getSpinnerPositionForMySettingsHolderValue()
+    spinner_timeout.setSelection(spinnerPositionForMySettingsValue)
+    d(TAG, "applyMySettingsToSpinner: set spinner selection to position: $spinnerPositionForMySettingsValue")
+
+  }
+
+  /** @return -1 means invalid that the saved value in settings does not match up w/ the currently available options. */
+  private fun getSpinnerPositionForMySettingsHolderValue(): Int {
+    val savedTimeoutInSec: Long = mySettingsHolder.value.timeoutNotChargingSec
+    val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
+    return myAdapter.getPosition(savedTimeoutInMin.toString())
+  }
+
+  private fun isSpinnerPositionDifferentThanMySettingsHolderValue(): Boolean {
+    val currentlySelectedSpinnerPosition: Int = spinner_timeout.selectedItemPosition
+    return getSpinnerPositionForMySettingsHolderValue() != currentlySelectedSpinnerPosition
   }
 
   private fun loadAndApplyFonts() {
@@ -142,36 +168,41 @@ class MainActivity : AppCompatActivity() {
         }
   }
 
-  private fun setupSpinner(font: Typeface) = with(spinner_timeout) {
-    // Create custom adatper to handle font.
-    val myAdapter = MySpinnerAdapter(this@MainActivity,
-                                     android.R.layout.simple_spinner_item,
-                                     resources.getStringArray(R.array.spinner_timeout_choices).toList(),
-                                     font)
-    adapter = myAdapter
-
-    // Restore saved selection.
-    val savedTimeoutInSec: Long = mySettings.value.timeoutNotChargingSec
-    val savedTimeoutInMin: Long = TimeUnit.MINUTES.convert(savedTimeoutInSec, TimeUnit.SECONDS)
-    val position = myAdapter.getPosition(savedTimeoutInMin.toString())
-    if (position != -1) {
-      spinner_timeout.setSelection(position)
-      formatMessages()
-      d(TAG, "setupSpinner: set spinner selection to position: $position")
-    }
+  private fun setupSpinner(font: Typeface) {
+    // Create custom adapter to handle font.
+    myAdapter = MySpinnerAdapter(this@MainActivity,
+                                 android.R.layout.simple_spinner_item,
+                                 resources.getStringArray(R.array.spinner_timeout_choices).toList(),
+                                 font)
+    spinner_timeout.adapter = myAdapter
 
     // Attach listeners to handle user selection.
     spinner_timeout.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
       override fun onNothingSelected(parent: AdapterView<*>?) {}
 
+      /**
+       * This method is called when the [spinner_timeout]'s selected position is set programmatically or by user
+       * interaction.
+       * For programmatic changes, this method filters out the following needless feedback loop:
+       * 1. At startup, spinner index is set programmatically by applyMySettingsToSpinner().
+       * 2. This results in onItemSelected() (this) method to be fired.
+       * 3. The settings are written and an EventBus event is fired
+       * 4. onSettingsChangedEvent() gets called by EventBus, which calls this applyMySettingsToSpinner() (again!)
+       * 5. onItemSelected() (this) method is called (again!)
+       */
       override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
         val selectionInMin: String = parent?.getItemAtPosition(position).toString()
         val selectionInSec: Long = TimeUnit.SECONDS.convert(selectionInMin.toLong(), TimeUnit.MINUTES)
-        changeSettings(this@MainActivity) {
-          timeoutNotChargingSec = selectionInSec
+
+        if (isSpinnerPositionDifferentThanMySettingsHolderValue()) {
+          d(TAG, "onItemSelected: spinner selection changed to '$selectionInMin' min -> calling changeSettings()")
+          changeSettings(this@MainActivity) {
+            timeoutNotChargingSec = selectionInSec
+          }
         }
-        formatMessages()
-        d(TAG, "onItemSelected: spinner selection is $selectionInMin")
+        else {
+          d(TAG, "onItemSelected: ignore this call since spinner selection is already set to '$selectionInMin' min")
+        }
       }
     }
   }
@@ -213,7 +244,7 @@ class MainActivity : AppCompatActivity() {
   @MainThread
   private fun formatMessages() {
     // Add actual minutes to string template.
-    val hours = TimeUnit.SECONDS.toMinutes(mySettings.value.timeoutNotChargingSec)
+    val hours = TimeUnit.SECONDS.toMinutes(mySettingsHolder.value.timeoutNotChargingSec)
     text_introduction_content.text = getString(R.string.introduction_body, hours)
 
     // Load the Open Source footer as HTML that can be clicked.
@@ -252,5 +283,6 @@ class MainActivity : AppCompatActivity() {
   fun checkboxClicked(view: View) =
       changeSettings(this) {
         autoStartEnabled = (view as CheckBox).isChecked
+        d(TAG, "checkboxClicked: checkbox selection is '$autoStartEnabled' min")
       }
 }

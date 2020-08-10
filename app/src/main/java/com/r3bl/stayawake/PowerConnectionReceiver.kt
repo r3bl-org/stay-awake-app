@@ -40,13 +40,13 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
     myContext.unregisterReceiver(this)
   }
 
-  private val mySettings = MyTileServiceSettings.ThreadSafeSettingsWrapper(myContext)
+  private val mySettingsHolder = ThreadSafeSettingsHolder(myContext)
 
-  /** Handle [SettingsChangedEvent] from [EventBus]. */
+  /** Handle [MyTileServiceSettings.SettingsChangedEvent] from [EventBus]. */
   @Subscribe(threadMode = ThreadMode.BACKGROUND)
   fun onSettingsChangedEvent(event: MyTileServiceSettings.SettingsChangedEvent) {
-    mySettings.value = event.settings
-    d(TAG, "PowerConnectionReceiver.onSettingsChangedEvent: ${mySettings}")
+    mySettingsHolder.value = event.settings
+    d(TAG, "PowerConnectionReceiver.onSettingsChangedEvent: ${mySettingsHolder}")
   }
 
   // Receiver functionality.
@@ -62,7 +62,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerConnected() {
-    if (mySettings.value.autoStartEnabled) {
+    if (mySettingsHolder.value.autoStartEnabled) {
       MyTileService.fireIntentWithStartService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_CONNECTED ... Start Service"
       //showToast(myContext, message)
@@ -76,7 +76,7 @@ class PowerConnectionReceiver(private val myContext: Context) : BroadcastReceive
   }
 
   private fun onPowerDisconnected() {
-    if (mySettings.value.autoStartEnabled) {
+    if (mySettingsHolder.value.autoStartEnabled) {
       MyTileService.fireIntentWithStopService(myContext)
       val message = "onReceive: PowerConnectionReceiver ACTION_POWER_DISCONNECTED ... Stop Service"
       //showToast(myContext, message)
