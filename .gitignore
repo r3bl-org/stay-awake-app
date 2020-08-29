@@ -11,6 +11,7 @@
 build
 out
 .DS_Store
+app
 
 # Local configuration file (sdk path, etc)
 local.properties

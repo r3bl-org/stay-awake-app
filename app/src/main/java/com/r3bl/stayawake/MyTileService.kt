@@ -80,7 +80,7 @@ class MyTileService : TileService() {
     mySettingsHolder = ThreadSafeSettingsHolder(this)
     MyTileServiceSettings.registerWithEventBus(this)
     //handleAutoStartOfService()
-    d(TAG, "onCreate: ")
+    d(TAG, "onCreate: done")
   }
 
 //  private fun handleAutoStartOfService() {
@@ -94,7 +94,6 @@ class MyTileService : TileService() {
 
   override fun onDestroy() {
     super.onDestroy()
-    d(TAG, "onDestroy: ")
     myExecutor?.apply {
       shutdownNow()
       d(TAG, "onDestroy: stopping executor")
@@ -105,30 +104,31 @@ class MyTileService : TileService() {
       d(TAG, "unregisterReceiver: PowerConnectionReceiver")
     }
     MyTileServiceSettings.unregisterFromEventBus(this)
+    d(TAG, "onDestroy: done")
   }
 
   // Bound Service code & TileService code.
   override fun onTileAdded() {
     super.onTileAdded()
-    d(TAG, "onTileAdded: ")
     updateTile()
+    d(TAG, "onTileAdded: done")
   }
 
   override fun onTileRemoved() {
     super.onTileRemoved()
-    d(TAG, "onTileRemoved: ")
+    d(TAG, "onTileRemoved: done")
   }
 
   override fun onStartListening() {
     super.onStartListening()
-    d(TAG, "onStartListening: ")
     updateTile()
+    d(TAG, "onStartListening: done")
   }
 
   override fun onStopListening() {
     super.onStopListening()
-    d(TAG, "onStopListening: ")
     updateTile()
+    d(TAG, "onStopListening: done")
   }
 
   override fun onClick() {
@@ -147,39 +147,35 @@ class MyTileService : TileService() {
   // Started service code.
   override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
     d(TAG, getDebugIntentString(intent, startId))
-    when {
-      IntentHelper.containsCommand(intent) -> processCommand(IntentHelper.getCommand(intent))
-      IntentHelper.containsMessage(intent) -> processMessage(IntentHelper.getMessage(intent))
-    }
+    processCommand(IntentHelper.getCommandId(intent))
+    processMessage(IntentHelper.getMessage(intent))
     return Service.START_NOT_STICKY
   }
 
   private fun getDebugIntentString(intent: Intent, startId: Int): String {
-    val containsCommand = IntentHelper.containsCommand(intent)
-    val containsMessage = IntentHelper.containsMessage(intent)
-    return String.format(
-        "onStartCommand: Service in [%s] state, commandId: [%d], message: [%s], startId: [%d]",
-        if (myServiceIsStarted) "STARTED" else "NOT STARTED",
-        if (containsCommand) IntentHelper.getCommand(intent) else "N/A",
-        if (containsMessage) IntentHelper.getMessage(intent) else "N/A",
-        startId)
+    val state: String = if (myServiceIsStarted) "STARTED" else "NOT STARTED"
+    val command: String = IntentHelper.getCommandIdDebugString(intent)
+    val message: String = IntentHelper.getMessageDebugString(intent)
+    return "onStartCommand: Service in [$state] state, commandId: [$command], message: [$message], startId: [$startId]"
   }
 
-  private fun processMessage(message: String) {
-    try {
-      // Do nothing.
-      d(TAG, "doMessage: message from client: $message")
-    }
-    catch (e: Exception) {
-      Log.e(TAG, "processMessage: exception", e)
+  private fun processMessage(message: String?) {
+    message?.apply {
+      try {
+        // Do nothing.
+        d(TAG, "doMessage: message from client: $message")
+      }
+      catch (e: Exception) {
+        Log.e(TAG, "processMessage: exception", e)
+      }
     }
   }
 
-  private fun processCommand(command: Int) {
+  private fun processCommand(@CommandId command: Int) {
     try {
       when (command) {
         CommandId.START -> commandStart()
-        CommandId.STOP  -> commandStop()
+        CommandId.STOP -> commandStop()
       }
     }
     catch (e: Exception) {
@@ -198,9 +194,11 @@ class MyTileService : TileService() {
       releaseWakeLock()
       stopForeground(true)
       stopSelf()
+      d(TAG, "commandStop: service is STOPPED")
       myExecutor?.apply {
         shutdown()
         myExecutor = null
+        d(TAG, "commandStop: stopping executor")
       }
       updateTile()
     }
@@ -283,7 +281,7 @@ class MyTileService : TileService() {
     if (myWakeLock == null) {
       val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
       myWakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG).apply { acquire() }
-      d(TAG, "acquireWakeLock: ")
+      d(TAG, "acquireWakeLock: done")
     }
   }
 
@@ -291,7 +289,7 @@ class MyTileService : TileService() {
     if (myWakeLock != null) {
       myWakeLock?.release()
       myWakeLock = null
-      d(TAG, "releaseWakeLock: ")
+      d(TAG, "releaseWakeLock: done")
     }
   }
 
