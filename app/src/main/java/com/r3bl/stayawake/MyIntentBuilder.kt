@@ -86,11 +86,16 @@ fun buildIntent(block: MyIntentBuilder.() -> Unit): Intent = MyIntentBuilder().a
 // Intent helpers.
 class IntentHelper {
   companion object {
-    fun containsCommand(intent: Intent): Boolean = intent.extras.containsKey(Keys.CommandId.name)
-    fun containsMessage(intent: Intent): Boolean = intent.extras.containsKey(Keys.Message.name)
-
     @CommandId
-    fun getCommand(intent: Intent): Int = intent.extras.getInt(Keys.CommandId.name)
-    fun getMessage(intent: Intent): String = intent.extras.getString(Keys.Message.name)
+    fun getCommandId(intent: Intent): Int = intent.extras?.getInt(Keys.CommandId.name) ?: INVALID
+    fun getCommandIdDebugString(intent: Intent): String = when (getCommandId(intent)) {
+      INVALID -> "INVALID"
+      STOP    -> "STOP"
+      START   -> "START"
+      else    -> "UNKNOWN 🤔"
+    }
+
+    fun getMessage(intent: Intent): String? = intent.extras?.getString(Keys.Message.name)
+    fun getMessageDebugString(intent: Intent): String = getMessage(intent) ?: "N/A"
   }
 }
