@@ -2,7 +2,7 @@
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
 - [stay-awake-app](#stay-awake-app)
-- [Future of this app in question](#future-of-this-app-in-question)
+- [Future of this app is in question](#future-of-this-app-is-in-question)
 - [Change master to main (2020-06-27)](#change-master-to-main-2020-06-27)
   - [License](#license)
 

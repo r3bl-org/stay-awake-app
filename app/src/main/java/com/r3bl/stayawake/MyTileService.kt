@@ -280,7 +280,7 @@ class MyTileService : TileService() {
   private fun acquireWakeLock() {
     if (myWakeLock == null) {
       val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
-      myWakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, TAG).apply { acquire() }
+      myWakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK, MY_WAKE_LOCK_TAG).apply { acquire() }
       d(TAG, "acquireWakeLock: done")
     }
   }
@@ -382,6 +382,7 @@ class MyTileService : TileService() {
       }
 
   companion object {
+    const val MY_WAKE_LOCK_TAG = "stayawake:wake-lock"
     const val TAG = "SA_MyService"
     const val DELAY_INITIAL: Long = 0
     const val DELAY_RECURRING: Long = 5
